@@ -160,8 +160,9 @@ export async function POST(
         type,
         priority,
         description: description.trim(),
-        status: "pending",
+        status: "in_progress",
         reportedAt: new Date(),
+        startedAt: new Date(),
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         estimatedCost: estimatedCost ? parseFloat(estimatedCost) : null,
       },
@@ -176,16 +177,14 @@ export async function POST(
       },
     });
 
-    // Se for emergência ou alta prioridade, marcar recurso como em manutenção
-    if (priority === "urgent" || priority === "high") {
-      await prisma.resource.update({
-        where: { id },
-        data: { status: "maintenance" },
-      });
-    }
+    // Marcar recurso como em manutenção (já que a manutenção está em andamento)
+    await prisma.resource.update({
+      where: { id },
+      data: { status: "maintenance" },
+    });
 
     console.log(
-      `✅ Novo registro de manutenção criado para recurso ${id}: ${type} - ${priority} por ${user.name}`
+      `✅ Manutenção iniciada para recurso ${id}: ${type} - ${priority} por ${user.name}`
     );
 
     return NextResponse.json(maintenanceRecord, { status: 201 });

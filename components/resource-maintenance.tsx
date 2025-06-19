@@ -152,7 +152,7 @@ export function ResourceMaintenance({
       });
 
       if (response.ok) {
-        toast.success("Registro de manutenção criado com sucesso!");
+        toast.success("Manutenção iniciada com sucesso!");
         setAddRecordOpen(false);
         resetNewForm();
         await loadMaintenanceRecords();
@@ -161,7 +161,7 @@ export function ResourceMaintenance({
         toast.error(error.error || "Erro ao criar registro");
       }
     } catch (error) {
-      toast.error("Erro ao criar registro de manutenção");
+      toast.error("Erro ao iniciar manutenção");
     } finally {
       setSubmitting(false);
     }
@@ -370,16 +370,23 @@ export function ResourceMaintenance({
                 <DialogTrigger asChild>
                   <Button size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Reportar Manutenção
+                    Iniciar Manutenção
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>
-                      Reportar Manutenção - {resourceName}
+                      Iniciar Manutenção - {resourceName}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800">
+                        <strong>Atenção:</strong> A manutenção será iniciada
+                        imediatamente e o recurso ficará indisponível para
+                        agendamentos.
+                      </p>
+                    </div>
                     <div>
                       <Label>Tipo de Manutenção</Label>
                       <Select value={newType} onValueChange={setNewType}>
@@ -422,7 +429,7 @@ export function ResourceMaintenance({
                     </div>
                     <div>
                       <Label htmlFor="scheduledDate">
-                        Data Sugerida (opcional)
+                        Data Estimada de Término (opcional)
                       </Label>
                       <Input
                         id="scheduledDate"
@@ -461,7 +468,7 @@ export function ResourceMaintenance({
                           !newDescription.trim()
                         }
                       >
-                        Criar Registro
+                        Iniciar Manutenção
                       </Button>
                     </div>
                   </div>

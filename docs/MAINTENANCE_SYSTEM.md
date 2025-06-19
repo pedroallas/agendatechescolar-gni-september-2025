@@ -31,6 +31,13 @@ O Sistema de Manutenção permite o controle completo do histórico de manutenç
 - **Datas Automáticas**: Timestamps automáticos para início e conclusão
 - **Alertas Preventivos**: Sugestão de próximas manutenções
 
+### Automação de Status
+
+- **Toda Manutenção**: Recurso automaticamente marcado como "maintenance" ao criar registro
+- **Status Inicial**: Manutenção sempre inicia como "in_progress"
+- **Data Estimada**: Campo `scheduledDate` representa data estimada de término
+- **Manutenção Concluída**: Verifica se há outras manutenções pendentes antes de marcar como "available"
+
 ## 🎯 Benefícios
 
 ### Para Professores
@@ -109,6 +116,13 @@ Cria um novo registro de manutenção.
   "estimatedCost": 100.0
 }
 ```
+
+**Comportamento:**
+
+- Manutenção criada automaticamente com status "in_progress"
+- Recurso marcado como "maintenance" independente da prioridade
+- `startedAt` definido como data/hora atual
+- `scheduledDate` representa a data estimada de término
 
 ### PUT `/api/resources/[id]/maintenance/[recordId]`
 
@@ -282,3 +296,18 @@ O sistema está **100% implementado** e inclui:
 5. Defina próxima manutenção preventiva se necessário
 
 O sistema de manutenção é uma ferramenta poderosa que transforma a gestão de recursos da escola, proporcionando maior controle, previsibilidade e eficiência operacional.
+
+1. **Relatório de Manutenção (Apenas Admins)**
+
+   - Criação de registros de manutenção
+   - **Manutenção inicia automaticamente como "em andamento"**
+   - Tipos: Preventiva, Corretiva, Emergência
+   - Prioridades: Baixa, Média, Alta, Urgente
+   - **Data do formulário = Data estimada de término**
+   - Estimativa de custos
+
+2. **Controle de Status do Recurso**
+   - **Toda manutenção marca recurso automaticamente como "em manutenção"**
+   - Manutenção inicia imediatamente como "em andamento"
+   - Conclusão de manutenção pode restaurar status "disponível"
+   - Integração automática com sistema de agendamentos
