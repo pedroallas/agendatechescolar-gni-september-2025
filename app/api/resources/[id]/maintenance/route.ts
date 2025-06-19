@@ -83,11 +83,35 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id } = await params;
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar se é admin (apenas admins podem reportar manutenção)
+    if (!["diretor", "coordenador"].includes(user.role)) {
+      return NextResponse.json(
+        {
+          error:
+            "Acesso negado. Apenas administradores podem reportar manutenção.",
+        },
+        { status: 403 }
+      );
+    }
+
     const { type, priority, description, scheduledDate, estimatedCost } =
       await request.json();
 
@@ -132,7 +156,7 @@ export async function POST(
     const maintenanceRecord = await prisma.maintenanceRecord.create({
       data: {
         resourceId: id,
-        userId: session.user.id,
+        userId: user.id,
         type,
         priority,
         description: description.trim(),
@@ -161,7 +185,7 @@ export async function POST(
     }
 
     console.log(
-      `✅ Novo registro de manutenção criado para recurso ${id}: ${type} - ${priority} por ${session.user.name}`
+      `✅ Novo registro de manutenção criado para recurso ${id}: ${type} - ${priority} por ${user.name}`
     );
 
     return NextResponse.json(maintenanceRecord, { status: 201 });

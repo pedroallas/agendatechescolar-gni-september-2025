@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth-config";
 // GET - Buscar um recurso específico
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,10 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const resource = await prisma.resource.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         images: {
           orderBy: [
@@ -37,7 +39,7 @@ export async function GET(
           orderBy: { createdAt: "desc" },
         },
         maintenanceHistory: {
-          orderBy: { performedAt: "desc" },
+          orderBy: { reportedAt: "desc" },
           take: 5, // Últimos 5 registros
         },
         _count: {
@@ -58,24 +60,24 @@ export async function GET(
     }
 
     // Calcular média de avaliações se houver
-    if (resource.ratings.length > 0) {
+    if (resource.ratings && resource.ratings.length > 0) {
       const totalRating = resource.ratings.reduce(
-        (sum, rating) => sum + rating.rating,
+        (sum: number, rating: any) => sum + rating.rating,
         0
       );
-      resource.averageRating = totalRating / resource.ratings.length;
-      resource.totalRatings = resource.ratings.length;
+      const averageRating = totalRating / resource.ratings.length;
+      const totalRatings = resource.ratings.length;
 
       // Atualizar no banco se necessário
       if (
-        resource.averageRating !== resource.averageRating ||
-        resource.totalRatings !== resource.totalRatings
+        resource.averageRating !== averageRating ||
+        resource.totalRatings !== totalRatings
       ) {
         await prisma.resource.update({
-          where: { id: params.id },
+          where: { id },
           data: {
-            averageRating: resource.averageRating,
-            totalRatings: resource.totalRatings,
+            averageRating,
+            totalRatings,
           },
         });
       }
@@ -94,13 +96,15 @@ export async function GET(
 // PUT - Atualizar um recurso
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     // Verificar se é admin
     const user = await prisma.user.findUnique({
@@ -120,7 +124,7 @@ export async function PUT(
 
     // Verificar se o recurso existe
     const existingResource = await prisma.resource.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingResource) {
@@ -132,7 +136,7 @@ export async function PUT(
 
     // Atualizar recurso
     const updatedResource = await prisma.resource.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         type: body.type,
@@ -179,13 +183,15 @@ export async function PUT(
 // DELETE - Remover um recurso
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     // Verificar se é admin
     const user = await prisma.user.findUnique({
@@ -204,7 +210,7 @@ export async function DELETE(
 
     // Verificar se o recurso existe
     const resource = await prisma.resource.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -224,7 +230,7 @@ export async function DELETE(
     // Verificar se há agendamentos ativos
     const activeBookings = await prisma.booking.count({
       where: {
-        resourceId: params.id,
+        resourceId: id,
         date: {
           gte: new Date(),
         },
@@ -237,15 +243,16 @@ export async function DELETE(
     if (activeBookings > 0) {
       return NextResponse.json(
         {
-          error: `Não é possível remover este recurso pois há ${activeBookings} agendamento(s) ativo(s).`,
+          error:
+            "Não é possível remover recurso com agendamentos ativos. Cancele os agendamentos primeiro.",
         },
         { status: 400 }
       );
     }
 
-    // Remover o recurso (as imagens e outros relacionamentos serão removidos em cascata)
+    // Remover o recurso
     await prisma.resource.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     console.log(`✅ Recurso removido: ${resource.name}`);

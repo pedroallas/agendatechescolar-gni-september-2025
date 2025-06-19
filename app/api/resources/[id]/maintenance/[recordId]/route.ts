@@ -10,11 +10,24 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id, recordId } = await params;
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
+
     const {
       status,
       solution,
@@ -41,9 +54,8 @@ export async function PUT(
     }
 
     // Verificar permissões (admin ou próprio usuário)
-    const isAdmin =
-      session.user.role === "diretor" || session.user.role === "coordenador";
-    const isOwner = existingRecord.userId === session.user.id;
+    const isAdmin = ["diretor", "coordenador"].includes(user.role);
+    const isOwner = existingRecord.userId === user.id;
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json(
@@ -130,11 +142,23 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id, recordId } = await params;
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
 
     // Verificar se o registro existe
     const existingRecord = await prisma.maintenanceRecord.findFirst({
@@ -152,9 +176,8 @@ export async function DELETE(
     }
 
     // Verificar permissões (admin ou próprio usuário)
-    const isAdmin =
-      session.user.role === "diretor" || session.user.role === "coordenador";
-    const isOwner = existingRecord.userId === session.user.id;
+    const isAdmin = ["diretor", "coordenador"].includes(user.role);
+    const isOwner = existingRecord.userId === user.id;
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json(

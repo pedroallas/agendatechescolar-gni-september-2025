@@ -64,12 +64,24 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id } = await params;
     const { rating, comment } = await request.json();
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
 
     // Validações
     if (!rating || rating < 1 || rating > 5) {
@@ -95,7 +107,7 @@ export async function POST(
     const existingRating = await prisma.resourceRating.findFirst({
       where: {
         resourceId: id,
-        userId: session.user.id,
+        userId: user.id,
       },
     });
 
@@ -110,7 +122,7 @@ export async function POST(
     const newRating = await prisma.resourceRating.create({
       data: {
         resourceId: id,
-        userId: session.user.id,
+        userId: user.id,
         rating,
         comment: comment?.trim() || null,
       },
@@ -143,7 +155,7 @@ export async function POST(
     });
 
     console.log(
-      `✅ Nova avaliação criada para recurso ${id}: ${rating} estrelas por ${session.user.name}`
+      `✅ Nova avaliação criada para recurso ${id}: ${rating} estrelas por ${user.name}`
     );
 
     return NextResponse.json(newRating, { status: 201 });

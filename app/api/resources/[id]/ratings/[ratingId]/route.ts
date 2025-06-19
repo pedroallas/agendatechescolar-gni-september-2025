@@ -10,12 +10,24 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id, ratingId } = await params;
     const { rating, comment } = await request.json();
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
 
     // Validações
     if (!rating || rating < 1 || rating > 5) {
@@ -30,7 +42,7 @@ export async function PUT(
       where: {
         id: ratingId,
         resourceId: id,
-        userId: session.user.id,
+        userId: user.id,
       },
     });
 
@@ -96,11 +108,23 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const { id, ratingId } = await params;
+
+    // Buscar o usuário pelo email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
 
     // Verificar se a avaliação existe e pertence ao usuário (ou é admin)
     const existingRating = await prisma.resourceRating.findFirst({
@@ -118,9 +142,8 @@ export async function DELETE(
     }
 
     // Verificar permissão (próprio usuário ou admin)
-    const isOwner = existingRating.userId === session.user.id;
-    const isAdmin =
-      session.user.role === "diretor" || session.user.role === "coordenador";
+    const isOwner = existingRating.userId === user.id;
+    const isAdmin = ["diretor", "coordenador"].includes(user.role);
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(

@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth-config";
 // GET - Buscar todas as imagens de um recurso
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,10 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const images = await prisma.resourceImage.findMany({
-      where: { resourceId: params.id },
+      where: { resourceId: id },
       orderBy: [
         { isPrimary: "desc" }, // Imagem principal primeiro
         { order: "asc" }, // Depois por ordem
@@ -36,13 +38,15 @@ export async function GET(
 // POST - Adicionar nova imagem ao recurso
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     // Verificar se é admin
     const user = await prisma.user.findUnique({
@@ -71,7 +75,7 @@ export async function POST(
 
     // Verificar se o recurso existe
     const resource = await prisma.resource.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!resource) {
@@ -84,14 +88,14 @@ export async function POST(
     // Se esta imagem será a principal, remover o status de principal das outras
     if (isPrimary) {
       await prisma.resourceImage.updateMany({
-        where: { resourceId: params.id },
+        where: { resourceId: id },
         data: { isPrimary: false },
       });
     }
 
     // Buscar a próxima ordem
     const lastImage = await prisma.resourceImage.findFirst({
-      where: { resourceId: params.id },
+      where: { resourceId: id },
       orderBy: { order: "desc" },
     });
 
@@ -99,7 +103,7 @@ export async function POST(
 
     const newImage = await prisma.resourceImage.create({
       data: {
-        resourceId: params.id,
+        resourceId: id,
         imageUrl,
         caption,
         isPrimary,
@@ -107,10 +111,7 @@ export async function POST(
       },
     });
 
-    console.log(
-      `✅ Nova imagem adicionada ao recurso ${params.id}:`,
-      newImage.id
-    );
+    console.log(`✅ Nova imagem adicionada ao recurso ${id}:`, newImage.id);
 
     return NextResponse.json(newImage, { status: 201 });
   } catch (error) {
@@ -125,13 +126,15 @@ export async function POST(
 // PUT - Atualizar ordem das imagens (para drag & drop)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     // Verificar se é admin
     const user = await prisma.user.findUnique({
@@ -162,7 +165,7 @@ export async function PUT(
       )
     );
 
-    console.log(`✅ Ordem das imagens atualizada para recurso ${params.id}`);
+    console.log(`✅ Ordem das imagens atualizada para recurso ${id}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {

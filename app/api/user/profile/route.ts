@@ -26,13 +26,13 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
       where: {
-        id: session.user.id,
+        email: session.user.email,
       },
       select: {
         id: true,
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
     // Atualizar usuário
     const updatedUser = await prisma.user.update({
       where: {
-        id: session.user.id,
+        email: session.user.email,
       },
       data: {
         ...(validatedData.name && { name: validatedData.name }),

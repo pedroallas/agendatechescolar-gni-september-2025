@@ -1,8 +1,8 @@
-# Sistema de Histórico de Manutenção
+# Sistema de Manutenção - AgendaTech
 
 ## 📋 Visão Geral
 
-O Sistema de Histórico de Manutenção é uma funcionalidade completa que permite o gerenciamento de manutenções preventivas e corretivas dos recursos da escola. O sistema oferece rastreamento detalhado, controle de custos e alertas preventivos.
+O Sistema de Manutenção permite o controle completo do histórico de manutenção dos recursos da escola. **Apenas administradores (diretores e coordenadores) podem reportar manutenção**, garantindo controle centralizado sobre os registros de manutenção.
 
 ## ✨ Funcionalidades Principais
 
@@ -69,17 +69,16 @@ Busca o histórico de manutenção de um recurso específico.
       "type": "corrective",
       "priority": "high",
       "status": "completed",
-      "description": "Descrição do problema",
-      "solution": "Solução aplicada",
-      "performedBy": "Técnico responsável",
+      "description": "Lâmpada queimada",
+      "solution": "Lâmpada substituída",
+      "performedBy": "Técnico João",
       "reportedAt": "2024-01-15T10:00:00Z",
       "resolvedAt": "2024-01-16T14:30:00Z",
-      "estimatedCost": 150.0,
-      "actualCost": 120.0,
+      "actualCost": 50.0,
       "user": {
         "id": "user_id",
-        "name": "Nome do Usuário",
-        "role": "professor"
+        "name": "Admin",
+        "role": "diretor"
       }
     }
   ],
@@ -97,15 +96,17 @@ Busca o histórico de manutenção de um recurso específico.
 
 Cria um novo registro de manutenção.
 
+**⚠️ Requer: Perfil de administrador (diretor/coordenador)**
+
 **Payload:**
 
 ```json
 {
   "type": "corrective",
   "priority": "high",
-  "description": "Descrição detalhada do problema",
-  "scheduledDate": "2024-01-20",
-  "estimatedCost": 200.0
+  "description": "Descrição do problema",
+  "scheduledDate": "2024-01-20T00:00:00Z",
+  "estimatedCost": 100.0
 }
 ```
 
@@ -113,21 +114,24 @@ Cria um novo registro de manutenção.
 
 Atualiza um registro de manutenção existente.
 
+**Permissões:** Próprio usuário ou admin
+
 **Payload:**
 
 ```json
 {
   "status": "completed",
-  "solution": "Descrição da solução aplicada",
-  "performedBy": "Nome do técnico",
-  "actualCost": 180.0,
-  "nextService": "2024-04-20"
+  "solution": "Problema resolvido",
+  "performedBy": "Técnico responsável",
+  "actualCost": 85.5
 }
 ```
 
 ### DELETE `/api/resources/[id]/maintenance/[recordId]`
 
 Remove um registro de manutenção.
+
+**Permissões:** Próprio usuário ou admin (com restrições para registros em andamento)
 
 ## 🎨 Componente React
 
@@ -146,9 +150,9 @@ Componente principal que renderiza todo o sistema de manutenção.
 
 ```tsx
 <ResourceMaintenance
-  resourceId="resource_id"
-  resourceName="Data Show 1"
-  isAdmin={true}
+  resourceId={resource.id}
+  resourceName={resource.name}
+  isAdmin={isAdmin} // Controla visibilidade do botão "Reportar"
   className="lg:col-span-3"
 />
 ```
@@ -183,20 +187,18 @@ model MaintenanceRecord {
 
 ## 🔐 Permissões
 
-### Usuários (Professores)
+### 👑 Administradores (Diretor/Coordenador)
 
-- ✅ Criar registros de manutenção
-- ✅ Visualizar histórico completo
-- ✅ Editar próprios registros (apenas pendentes)
-- ✅ Deletar próprios registros (apenas pendentes)
+- ✅ Reportar nova manutenção
+- ✅ Editar qualquer registro
+- ✅ Deletar registros (exceto em andamento/concluídos por outros)
+- ✅ Visualizar todos os registros
 
-### Administradores
+### 👤 Usuários Comuns (Professores/Funcionários)
 
-- ✅ Todas as permissões de usuários
-- ✅ Atualizar qualquer registro
-- ✅ Deletar qualquer registro
-- ✅ Alterar status dos registros
-- ✅ Gerenciar custos e soluções
+- ❌ **NÃO podem reportar manutenção**
+- ✅ Visualizar registros de manutenção
+- ✅ Editar apenas seus próprios registros pendentes
 
 ## 🎯 Tipos e Prioridades
 

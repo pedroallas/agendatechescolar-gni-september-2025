@@ -365,7 +365,7 @@ export function ResourceMaintenance({
               <Wrench className="h-5 w-5 text-blue-600" />
               <span>Histórico de Manutenção ({stats?.totalRecords || 0})</span>
             </div>
-            {session?.user && (
+            {session?.user && isAdmin && (
               <Dialog open={addRecordOpen} onOpenChange={setAddRecordOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm">
