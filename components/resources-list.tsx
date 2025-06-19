@@ -98,7 +98,14 @@ export function ResourcesList({
           <Card key={resource.id}>
             <CardHeader className="p-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">{resource.name}</CardTitle>
+                <CardTitle
+                  className="text-lg cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() =>
+                    router.push(`/dashboard/resources/${resource.id}`)
+                  }
+                >
+                  {resource.name}
+                </CardTitle>
                 <Badge
                   variant={
                     resource.status === "available"
@@ -150,27 +157,38 @@ export function ResourcesList({
                 />
               </div>
             </CardContent>
-            {isAdmin && (
-              <CardFooter className="flex justify-between p-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(resource.id)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => setDeleteResourceId(resource.id)}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Remover
-                </Button>
-              </CardFooter>
-            )}
+            <CardFooter className="flex justify-between p-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  router.push(`/dashboard/resources/${resource.id}`)
+                }
+              >
+                Ver Detalhes
+              </Button>
+              {isAdmin && (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(resource.id)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => setDeleteResourceId(resource.id)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Remover
+                  </Button>
+                </div>
+              )}
+            </CardFooter>
           </Card>
         ))}
       </div>

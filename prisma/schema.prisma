@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   bookings      Booking[]
   sessions      Session[]
+  ratings       ResourceRating[] // Avaliações feitas pelo usuário
 }
 
 model Account {
@@ -69,10 +70,67 @@ model Resource {
   imageUrl          String?
   status            String             @default("available")
   requiresApproval  Boolean            @default(false)
+  qrCode            String?            // QR Code gerado automaticamente
+  averageRating     Float?             // Média das avaliações
+  totalRatings      Int                @default(0)
+  maintenanceNotes  String?            // Notas de manutenção
+  purchaseDate      DateTime?          // Data de aquisição
+  warrantyExpiry    DateTime?          // Vencimento da garantia
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   bookings          Booking[]
   maintenanceBlocks MaintenanceBlock[]
+  images            ResourceImage[]    // Galeria de imagens
+  ratings           ResourceRating[]   // Avaliações dos usuários
+  maintenanceHistory MaintenanceRecord[] // Histórico de manutenção
+}
+
+// Nova tabela para galeria de imagens dos recursos
+model ResourceImage {
+  id          String   @id @default(cuid())
+  resourceId  String
+  imageUrl    String
+  caption     String?  // Legenda da imagem
+  isPrimary   Boolean  @default(false) // Imagem principal
+  order       Int      @default(0)     // Ordem de exibição
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+}
+
+// Nova tabela para avaliações dos recursos
+model ResourceRating {
+  id         String   @id @default(cuid())
+  resourceId String
+  userId     String
+  rating     Int      // 1-5 estrelas
+  comment    String?  // Comentário opcional
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, userId]) // Um usuário só pode avaliar um recurso uma vez
+  @@index([resourceId])
+}
+
+// Nova tabela para histórico de manutenção
+model MaintenanceRecord {
+  id           String   @id @default(cuid())
+  resourceId   String
+  description  String   // Descrição do serviço realizado
+  cost         Float?   // Custo da manutenção
+  performedBy  String?  // Quem realizou
+  performedAt  DateTime // Data da manutenção
+  nextService  DateTime? // Próxima manutenção prevista
+  type         String   // preventiva, corretiva, etc.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
 }
 
 model TimeBlock {

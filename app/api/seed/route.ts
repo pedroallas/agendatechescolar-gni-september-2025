@@ -186,6 +186,63 @@ export async function GET() {
       }),
     ]);
 
+    // Criar imagens de exemplo para os recursos
+    const sampleImages = await Promise.all([
+      // Imagens para Data Show 1
+      prisma.resourceImage.create({
+        data: {
+          resourceId: resources[0].id,
+          imageUrl:
+            "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop",
+          caption: "Data Show principal - vista frontal",
+          isPrimary: true,
+          order: 0,
+        },
+      }),
+      prisma.resourceImage.create({
+        data: {
+          resourceId: resources[0].id,
+          imageUrl:
+            "https://images.unsplash.com/photo-1551818255-e6e10975bc17?w=800&h=600&fit=crop",
+          caption: "Controles e conectores",
+          isPrimary: false,
+          order: 1,
+        },
+      }),
+      // Imagens para TV 55"
+      prisma.resourceImage.create({
+        data: {
+          resourceId: resources[2].id,
+          imageUrl:
+            "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=800&h=600&fit=crop",
+          caption: "Smart TV 55 polegadas",
+          isPrimary: true,
+          order: 0,
+        },
+      }),
+      // Imagens para Laboratório de Informática
+      prisma.resourceImage.create({
+        data: {
+          resourceId: resources[4].id,
+          imageUrl:
+            "https://images.unsplash.com/photo-1562813733-b31f71025d54?w=800&h=600&fit=crop",
+          caption: "Vista geral do laboratório",
+          isPrimary: true,
+          order: 0,
+        },
+      }),
+      prisma.resourceImage.create({
+        data: {
+          resourceId: resources[4].id,
+          imageUrl:
+            "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=800&h=600&fit=crop",
+          caption: "Estações de trabalho individuais",
+          isPrimary: false,
+          order: 1,
+        },
+      }),
+    ]);
+
     // Criar alguns agendamentos de exemplo
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -219,6 +276,7 @@ export async function GET() {
         users: { admin, teacher },
         timeBlocks,
         resources,
+        sampleImages,
         bookings,
       },
     });
