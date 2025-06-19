@@ -21,6 +21,7 @@ model User {
   bookings      Booking[]
   sessions      Session[]
   ratings       ResourceRating[] // Avaliações feitas pelo usuário
+  maintenanceReports MaintenanceRecord[] // Relatórios de manutenção criados
 }
 
 model Account {
@@ -118,19 +119,30 @@ model ResourceRating {
 
 // Nova tabela para histórico de manutenção
 model MaintenanceRecord {
-  id           String   @id @default(cuid())
-  resourceId   String
-  description  String   // Descrição do serviço realizado
-  cost         Float?   // Custo da manutenção
-  performedBy  String?  // Quem realizou
-  performedAt  DateTime // Data da manutenção
-  nextService  DateTime? // Próxima manutenção prevista
-  type         String   // preventiva, corretiva, etc.
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  resourceId    String
+  userId        String   // Quem reportou a manutenção
+  type          String   // preventive, corrective, emergency
+  priority      String   // low, medium, high, urgent
+  status        String   @default("pending") // pending, in_progress, completed, cancelled
+  description   String   // Descrição do problema/serviço
+  solution      String?  // Descrição da solução aplicada
+  cost          Float?   // Custo da manutenção
+  performedBy   String?  // Quem realizou a manutenção
+  reportedAt    DateTime @default(now()) // Data do reporte
+  scheduledDate DateTime? // Data agendada para manutenção
+  startedAt     DateTime? // Data de início da manutenção
+  resolvedAt    DateTime? // Data de conclusão
+  nextService   DateTime? // Próxima manutenção prevista
+  estimatedCost Float?   // Custo estimado
+  actualCost    Float?   // Custo real
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  resource      Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([resourceId])
+  @@index([userId])
 }
 
 model TimeBlock {

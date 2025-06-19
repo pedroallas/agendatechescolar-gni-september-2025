@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ResourceGallery } from "@/components/resource-gallery";
+import { ResourceRatings } from "@/components/resource-ratings";
+import { ResourceMaintenance } from "@/components/resource-maintenance";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -207,12 +209,13 @@ export default function ResourceDetailsPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Galeria de Imagens */}
         <ResourceGallery
           resourceId={resource.id}
           resourceName={resource.name}
           isAdmin={isAdmin}
+          className="lg:col-span-2"
         />
 
         {/* Informações do Recurso */}
@@ -349,6 +352,21 @@ export default function ResourceDetailsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Sistema de Avaliações */}
+        <ResourceRatings
+          resourceId={resource.id}
+          resourceName={resource.name}
+          className="lg:col-span-3"
+        />
+
+        {/* Sistema de Manutenção */}
+        <ResourceMaintenance
+          resourceId={resource.id}
+          resourceName={resource.name}
+          isAdmin={isAdmin}
+          className="lg:col-span-3"
+        />
       </div>
     </div>
   );

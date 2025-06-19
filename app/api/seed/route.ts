@@ -270,6 +270,148 @@ export async function GET() {
       }),
     ]);
 
+    // Criar avaliações de exemplo
+    const sampleRatings = await Promise.all([
+      // Avaliações para Data Show 1
+      prisma.resourceRating.create({
+        data: {
+          resourceId: resources[0].id,
+          userId: teacher.id,
+          rating: 5,
+          comment:
+            "Excelente qualidade de imagem! Muito fácil de usar e conecta rapidamente com o notebook. Recomendo para apresentações importantes.",
+        },
+      }),
+      prisma.resourceRating.create({
+        data: {
+          resourceId: resources[0].id,
+          userId: admin.id,
+          rating: 4,
+          comment:
+            "Bom equipamento, mas às vezes demora um pouco para reconhecer o sinal HDMI. No geral, atende bem às necessidades.",
+        },
+      }),
+      // Avaliações para TV 55"
+      prisma.resourceRating.create({
+        data: {
+          resourceId: resources[2].id,
+          userId: teacher.id,
+          rating: 5,
+          comment:
+            "Perfeita para videoconferências e apresentações! A qualidade da imagem é excelente e o sistema Smart TV facilita muito o uso.",
+        },
+      }),
+      // Avaliações para Laboratório de Informática
+      prisma.resourceRating.create({
+        data: {
+          resourceId: resources[4].id,
+          userId: admin.id,
+          rating: 4,
+          comment:
+            "Laboratório bem equipado com computadores atualizados. Alguns equipamentos precisam de manutenção, mas no geral é muito bom para aulas práticas.",
+        },
+      }),
+    ]);
+
+    // Criar registros de manutenção de exemplo
+    const sampleMaintenanceRecords = await Promise.all([
+      // Manutenção preventiva para Data Show 1
+      prisma.maintenanceRecord.create({
+        data: {
+          resourceId: resources[0].id,
+          userId: admin.id,
+          type: "preventive",
+          priority: "medium",
+          status: "completed",
+          description: "Limpeza dos filtros e calibração da imagem",
+          solution:
+            "Filtros limpos e configurações de imagem ajustadas. Funcionamento normal restaurado.",
+          performedBy: "Técnico João Silva",
+          reportedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 dias atrás
+          startedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 dias atrás
+          resolvedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 dias atrás
+          actualCost: 50.0,
+          nextService: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 dias no futuro
+        },
+      }),
+      // Manutenção corretiva para Data Show 2 (em manutenção)
+      prisma.maintenanceRecord.create({
+        data: {
+          resourceId: resources[1].id,
+          userId: teacher.id,
+          type: "corrective",
+          priority: "high",
+          status: "in_progress",
+          description: "Lâmpada queimada, não está projetando imagem",
+          performedBy: "Técnico João Silva",
+          reportedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 dias atrás
+          startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 dia atrás
+          estimatedCost: 150.0,
+        },
+      }),
+      // Manutenção pendente para Laboratório
+      prisma.maintenanceRecord.create({
+        data: {
+          resourceId: resources[4].id,
+          userId: teacher.id,
+          type: "corrective",
+          priority: "low",
+          status: "pending",
+          description:
+            "Alguns computadores estão lentos, possível necessidade de limpeza de disco e atualização",
+          reportedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 dia atrás
+          scheduledDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 dias no futuro
+          estimatedCost: 200.0,
+        },
+      }),
+      // Manutenção de emergência concluída para TV 55"
+      prisma.maintenanceRecord.create({
+        data: {
+          resourceId: resources[2].id,
+          userId: admin.id,
+          type: "emergency",
+          priority: "urgent",
+          status: "completed",
+          description: "Tela preta após queda de energia, não liga",
+          solution:
+            "Problema na fonte de alimentação. Fonte substituída e sistema testado.",
+          performedBy: "Técnico Maria Santos",
+          reportedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 dias atrás
+          startedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 dias atrás
+          resolvedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000), // 9 dias atrás
+          actualCost: 300.0,
+        },
+      }),
+    ]);
+
+    // Atualizar estatísticas dos recursos com avaliações
+    await Promise.all([
+      // Data Show 1 - média 4.5 (5+4)/2
+      prisma.resource.update({
+        where: { id: resources[0].id },
+        data: {
+          averageRating: 4.5,
+          totalRatings: 2,
+        },
+      }),
+      // TV 55" - média 5.0
+      prisma.resource.update({
+        where: { id: resources[2].id },
+        data: {
+          averageRating: 5.0,
+          totalRatings: 1,
+        },
+      }),
+      // Laboratório - média 4.0
+      prisma.resource.update({
+        where: { id: resources[4].id },
+        data: {
+          averageRating: 4.0,
+          totalRatings: 1,
+        },
+      }),
+    ]);
+
     return NextResponse.json({
       message: "Dados de exemplo criados com sucesso",
       data: {
@@ -278,6 +420,8 @@ export async function GET() {
         resources,
         sampleImages,
         bookings,
+        sampleRatings,
+        sampleMaintenanceRecords,
       },
     });
   } catch (error) {

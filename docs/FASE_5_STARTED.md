@@ -37,6 +37,60 @@
 - ✅ Estatísticas de uso
 - ✅ Ações rápidas
 
+### ✅ **Sistema de Avaliações e Comentários - COMPLETO**
+
+#### **APIs Implementadas**
+
+- ✅ `GET /api/resources/[id]/ratings` - Listar avaliações com estatísticas
+- ✅ `POST /api/resources/[id]/ratings` - Criar nova avaliação
+- ✅ `PUT /api/resources/[id]/ratings/[ratingId]` - Editar avaliação
+- ✅ `DELETE /api/resources/[id]/ratings/[ratingId]` - Remover avaliação
+
+#### **Componente ResourceRatings**
+
+- ✅ Sistema de estrelas interativo (1-5)
+- ✅ Comentários opcionais
+- ✅ Estatísticas com gráficos de distribuição
+- ✅ Controle de permissões (uma avaliação por usuário)
+- ✅ Edição de avaliações próprias
+- ✅ Moderação por administradores
+- ✅ Avatars e badges de papel do usuário
+
+#### **Integração Completa**
+
+- ✅ Exibição de ratings na lista de recursos
+- ✅ Página de detalhes com seção de avaliações
+- ✅ Atualização automática de estatísticas
+- ✅ Dados de exemplo no seed
+
+### ✅ **Sistema de Histórico de Manutenção - COMPLETO**
+
+#### **APIs Implementadas**
+
+- ✅ `GET /api/resources/[id]/maintenance` - Listar histórico com estatísticas
+- ✅ `POST /api/resources/[id]/maintenance` - Criar registro de manutenção
+- ✅ `PUT /api/resources/[id]/maintenance/[recordId]` - Atualizar registro
+- ✅ `DELETE /api/resources/[id]/maintenance/[recordId]` - Remover registro
+
+#### **Componente ResourceMaintenance**
+
+- ✅ Formulário para reportar manutenções
+- ✅ Tipos: Preventiva, Corretiva, Emergência
+- ✅ Prioridades: Baixa, Média, Alta, Urgente
+- ✅ Status: Pendente, Em Andamento, Concluído, Cancelado
+- ✅ Controle de custos (estimado vs real)
+- ✅ Dashboard com estatísticas detalhadas
+- ✅ Automação de status dos recursos
+
+#### **Funcionalidades Avançadas**
+
+- ✅ Tempo médio de resolução
+- ✅ Controle de permissões granular
+- ✅ Histórico completo com soluções
+- ✅ Agendamento de manutenções
+- ✅ Alertas preventivos
+- ✅ Dados de exemplo no seed
+
 ## 🔄 **Próximas Funcionalidades**
 
 ### **📱 QR Codes**
@@ -44,15 +98,10 @@
 - [ ] Geração automática
 - [ ] Página mobile via QR
 
-### **⭐ Sistema de Avaliações**
+### **📋 Relatórios Avançados**
 
-- [ ] Interface para avaliar
-- [ ] Exibição de ratings
-
-### **🔧 Histórico de Manutenção**
-
-- [ ] Registro de manutenções
-- [ ] Alertas preventivos
+- [ ] Dashboard executivo
+- [ ] Gráficos de performance
 
 ## 🎯 **Como Testar**
 

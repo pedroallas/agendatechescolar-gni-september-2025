@@ -15,6 +15,8 @@ export type Resource = {
   imageUrl?: string;
   status: string;
   requiresApproval: boolean;
+  averageRating?: number;
+  totalRatings: number;
 };
 
 export function useResources(type?: string) {

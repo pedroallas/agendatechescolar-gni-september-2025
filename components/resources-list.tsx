@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash, Loader2 } from "lucide-react";
+import { Edit, Trash, Loader2, Star } from "lucide-react";
 import { useResources } from "@/hooks/use-resources";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -151,10 +151,21 @@ export function ResourcesList({
                   {resource.capacity}
                 </p>
               )}
-              <div className="mt-3">
+              <div className="mt-3 flex items-center justify-between">
                 <ResourceApprovalBadge
                   requiresApproval={resource.requiresApproval}
                 />
+                {resource.averageRating && resource.averageRating > 0 && (
+                  <div className="flex items-center space-x-1 text-sm">
+                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    <span className="font-medium">
+                      {resource.averageRating.toFixed(1)}
+                    </span>
+                    <span className="text-gray-500">
+                      ({resource.totalRatings})
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex justify-between p-4">

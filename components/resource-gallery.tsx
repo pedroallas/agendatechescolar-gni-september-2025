@@ -28,6 +28,7 @@ import {
   X,
   Maximize2,
 } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface ResourceImage {
   id: string;
@@ -57,7 +58,11 @@ export function ResourceGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [addImageOpen, setAddImageOpen] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
+  const [deleteImageOpen, setDeleteImageOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ResourceImage | null>(
+    null
+  );
+  const [imageToDelete, setImageToDelete] = useState<ResourceImage | null>(
     null
   );
 
@@ -65,6 +70,8 @@ export function ResourceGallery({
   const [imageUrl, setImageUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"url" | "upload">("upload");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
 
   // Carregar imagens
   const loadImages = async () => {
@@ -87,8 +94,10 @@ export function ResourceGallery({
 
   // Adicionar nova imagem
   const handleAddImage = async () => {
-    if (!imageUrl.trim()) {
-      toast.error("URL da imagem é obrigatória");
+    const finalImageUrl = uploadMode === "upload" ? uploadedImageUrl : imageUrl;
+
+    if (!finalImageUrl.trim()) {
+      toast.error("Imagem é obrigatória");
       return;
     }
 
@@ -97,7 +106,7 @@ export function ResourceGallery({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageUrl: imageUrl.trim(),
+          imageUrl: finalImageUrl.trim(),
           caption: caption.trim() || undefined,
           isPrimary,
         }),
@@ -109,6 +118,7 @@ export function ResourceGallery({
         setImageUrl("");
         setCaption("");
         setIsPrimary(false);
+        setUploadedImageUrl("");
         loadImages();
       } else {
         const error = await response.json();
@@ -150,13 +160,19 @@ export function ResourceGallery({
     }
   };
 
+  // Abrir confirmação de deleção
+  const openDeleteConfirmation = (image: ResourceImage) => {
+    setImageToDelete(image);
+    setDeleteImageOpen(true);
+  };
+
   // Deletar imagem
-  const handleDeleteImage = async (imageId: string) => {
-    if (!confirm("Tem certeza que deseja remover esta imagem?")) return;
+  const handleDeleteImage = async () => {
+    if (!imageToDelete) return;
 
     try {
       const response = await fetch(
-        `/api/resources/${resourceId}/images/${imageId}`,
+        `/api/resources/${resourceId}/images/${imageToDelete.id}`,
         {
           method: "DELETE",
         }
@@ -164,6 +180,8 @@ export function ResourceGallery({
 
       if (response.ok) {
         toast.success("Imagem removida com sucesso!");
+        setDeleteImageOpen(false);
+        setImageToDelete(null);
         loadImages();
         if (currentIndex >= images.length - 1) {
           setCurrentIndex(Math.max(0, images.length - 2));
@@ -225,20 +243,56 @@ export function ResourceGallery({
                     Adicionar Imagem
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Adicionar Nova Imagem</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="imageUrl">URL da Imagem</Label>
-                      <Input
-                        id="imageUrl"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        placeholder="https://exemplo.com/imagem.jpg"
-                      />
+                    {/* Seletor de modo */}
+                    <div className="flex space-x-2 p-1 bg-gray-100 rounded-lg">
+                      <Button
+                        type="button"
+                        variant={uploadMode === "upload" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setUploadMode("upload")}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadMode === "url" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setUploadMode("url")}
+                      >
+                        🔗 URL
+                      </Button>
                     </div>
+
+                    {/* Campo de imagem */}
+                    {uploadMode === "upload" ? (
+                      <div>
+                        <Label>Fazer Upload da Imagem</Label>
+                        <ImageUpload
+                          value={uploadedImageUrl}
+                          onChange={setUploadedImageUrl}
+                          onRemove={() => setUploadedImageUrl("")}
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="imageUrl">URL da Imagem</Label>
+                        <Input
+                          id="imageUrl"
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          placeholder="https://exemplo.com/imagem.jpg"
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <Label htmlFor="caption">Legenda (opcional)</Label>
                       <Textarea
@@ -248,6 +302,7 @@ export function ResourceGallery({
                         placeholder="Descrição da imagem..."
                       />
                     </div>
+
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="isPrimary"
@@ -256,10 +311,17 @@ export function ResourceGallery({
                       />
                       <Label htmlFor="isPrimary">Imagem principal</Label>
                     </div>
+
                     <div className="flex justify-end space-x-2">
                       <Button
                         variant="outline"
-                        onClick={() => setAddImageOpen(false)}
+                        onClick={() => {
+                          setAddImageOpen(false);
+                          setImageUrl("");
+                          setCaption("");
+                          setIsPrimary(false);
+                          setUploadedImageUrl("");
+                        }}
                       >
                         Cancelar
                       </Button>
@@ -302,20 +364,56 @@ export function ResourceGallery({
                     Adicionar
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Adicionar Nova Imagem</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="imageUrl">URL da Imagem</Label>
-                      <Input
-                        id="imageUrl"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        placeholder="https://exemplo.com/imagem.jpg"
-                      />
+                    {/* Seletor de modo */}
+                    <div className="flex space-x-2 p-1 bg-gray-100 rounded-lg">
+                      <Button
+                        type="button"
+                        variant={uploadMode === "upload" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setUploadMode("upload")}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadMode === "url" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setUploadMode("url")}
+                      >
+                        🔗 URL
+                      </Button>
                     </div>
+
+                    {/* Campo de imagem */}
+                    {uploadMode === "upload" ? (
+                      <div>
+                        <Label>Fazer Upload da Imagem</Label>
+                        <ImageUpload
+                          value={uploadedImageUrl}
+                          onChange={setUploadedImageUrl}
+                          onRemove={() => setUploadedImageUrl("")}
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="imageUrl">URL da Imagem</Label>
+                        <Input
+                          id="imageUrl"
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          placeholder="https://exemplo.com/imagem.jpg"
+                        />
+                      </div>
+                    )}
+
                     <div>
                       <Label htmlFor="caption">Legenda (opcional)</Label>
                       <Textarea
@@ -325,6 +423,7 @@ export function ResourceGallery({
                         placeholder="Descrição da imagem..."
                       />
                     </div>
+
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="isPrimary"
@@ -333,10 +432,17 @@ export function ResourceGallery({
                       />
                       <Label htmlFor="isPrimary">Imagem principal</Label>
                     </div>
+
                     <div className="flex justify-end space-x-2">
                       <Button
                         variant="outline"
-                        onClick={() => setAddImageOpen(false)}
+                        onClick={() => {
+                          setAddImageOpen(false);
+                          setImageUrl("");
+                          setCaption("");
+                          setIsPrimary(false);
+                          setUploadedImageUrl("");
+                        }}
                       >
                         Cancelar
                       </Button>
@@ -421,7 +527,7 @@ export function ResourceGallery({
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDeleteImage(currentImage.id)}
+                    onClick={() => openDeleteConfirmation(currentImage)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -533,6 +639,76 @@ export function ResourceGallery({
                 Cancelar
               </Button>
               <Button onClick={handleEditImage}>Salvar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={deleteImageOpen} onOpenChange={setDeleteImageOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {imageToDelete && (
+              <>
+                <div className="text-center">
+                  <div className="w-32 h-32 mx-auto mb-4 rounded-lg overflow-hidden border">
+                    <Image
+                      src={imageToDelete.imageUrl}
+                      alt={imageToDelete.caption || "Imagem"}
+                      width={128}
+                      height={128}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    {imageToDelete.caption || "Sem legenda"}
+                  </p>
+                  {imageToDelete.isPrimary && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-yellow-100 text-yellow-800 mb-2"
+                    >
+                      <Star className="h-3 w-3 mr-1" />
+                      Imagem Principal
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-center text-gray-700">
+                  Tem certeza que deseja remover esta imagem?
+                </p>
+                <p className="text-center text-sm text-red-600">
+                  Esta ação não pode ser desfeita.
+                </p>
+              </>
+            )}
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteImageOpen(false);
+                  setImageToDelete(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteImage}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir
+              </Button>
             </div>
           </div>
         </DialogContent>
