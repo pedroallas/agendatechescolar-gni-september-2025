@@ -300,12 +300,120 @@ async function main() {
       },
     });
 
+    // Criar mensagens internas de exemplo (Fase 6)
+    console.log("💬 Criando mensagens internas de exemplo...");
+
+    const messages = [
+      {
+        senderId: admin.id,
+        recipientId: teacher.id,
+        subject: "Reunião pedagógica - Próxima semana",
+        content:
+          "Olá! Gostaria de agendar uma reunião pedagógica para discutirmos os novos recursos disponíveis na escola. Você tem disponibilidade na próxima semana? Por favor, me informe os melhores horários para você.",
+        priority: "high",
+        isRead: false,
+      },
+      {
+        senderId: teacher.id,
+        recipientId: admin.id,
+        subject: "Re: Reunião pedagógica - Próxima semana",
+        content:
+          "Oi! Claro, vamos agendar sim. Tenho disponibilidade na terça-feira às 14h ou na quinta-feira às 10h. Qual horário funciona melhor para você?",
+        priority: "normal",
+        isRead: true,
+        readAt: new Date(),
+      },
+      {
+        senderId: admin.id,
+        recipientId: teacher.id,
+        subject: "Novos equipamentos chegaram",
+        content:
+          "Informo que chegaram os novos tablets que foram solicitados. Eles já estão catalogados no sistema e disponíveis para agendamento. Qualquer dúvida sobre como utilizá-los, estarei à disposição.",
+        priority: "normal",
+        isRead: false,
+      },
+      {
+        senderId: teacher.id,
+        recipientId: admin.id,
+        subject: "Problema com projetor da sala 205",
+        content:
+          "Bom dia! O projetor da sala 205 está apresentando problemas na imagem (fica tremulando). Poderia verificar se é possível agendar uma manutenção? Preciso usar na aula de amanhã às 8h.",
+        priority: "urgent",
+        isRead: false,
+      },
+    ];
+
+    const createdMessages = [];
+    for (const messageData of messages) {
+      const message = await prisma.internalMessage.create({
+        data: messageData,
+      });
+      createdMessages.push(message);
+    }
+
+    // Criar algumas respostas para as mensagens
+    await prisma.messageReply.create({
+      data: {
+        messageId: createdMessages[0].id,
+        senderId: teacher.id,
+        content:
+          "Perfeito! Terça-feira às 14h funciona muito bem para mim. Podemos nos encontrar na sala de coordenação?",
+      },
+    });
+
+    await prisma.messageReply.create({
+      data: {
+        messageId: createdMessages[3].id,
+        senderId: admin.id,
+        content:
+          "Já entrei em contato com a equipe técnica. Eles vão verificar hoje à tarde. Como alternativa, você pode usar o projetor móvel que está no almoxarifado.",
+      },
+    });
+
+    // Criar dados de exemplo para WhatsApp (simulados)
+    console.log("📱 Criando histórico WhatsApp de exemplo...");
+
+    const whatsappMessages = [
+      {
+        userId: admin.id,
+        phoneNumber: "5511999887766",
+        message:
+          "Lembrete: Reunião de pais e mestres amanhã às 19h no auditório.",
+        template: "meeting_reminder",
+        status: "delivered",
+        deliveredAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
+      },
+      {
+        userId: admin.id,
+        phoneNumber: "5511888776655",
+        message:
+          "Sua solicitação de agendamento do laboratório foi aprovada para terça-feira às 14h.",
+        template: "booking_approved",
+        status: "read",
+        deliveredAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hora atrás
+        readAt: new Date(Date.now() - 30 * 60 * 1000), // 30 min atrás
+      },
+      {
+        phoneNumber: "5511777665544",
+        message:
+          "Bom dia! Gostaria de saber sobre a disponibilidade do auditório para evento no próximo mês.",
+        status: "received",
+      },
+    ];
+
+    for (const whatsappData of whatsappMessages) {
+      await prisma.whatsAppMessage.create({
+        data: whatsappData,
+      });
+    }
+
     console.log("✅ Seed concluído com sucesso!");
     console.log({
       users: { admin, teacher },
       timeBlocksCount: timeBlocks.length,
       resourcesCount: resources.length,
       bookingsCount: bookings.length,
+      messagesCount: createdMessages.length,
     });
   } catch (error) {
     console.error("❌ Erro durante o seed:", error);

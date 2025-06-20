@@ -38,6 +38,7 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
+import { PushNotificationSettings } from "@/components/push-notification-settings";
 
 const profileSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
@@ -333,6 +334,9 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Configurações Avançadas de Push Notifications */}
+          <PushNotificationSettings />
 
           {/* Segurança */}
           <Card>
