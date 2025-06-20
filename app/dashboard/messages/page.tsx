@@ -77,6 +77,7 @@ export default function MessagesPage() {
   const [showCompose, setShowCompose] = useState(false);
   const [showReply, setShowReply] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const {
     messages,
@@ -111,13 +112,27 @@ export default function MessagesPage() {
   // Buscar usuários para destinatários
   const fetchUsers = async () => {
     try {
+      setLoadingUsers(true);
+      console.log("Buscando usuários...");
       const response = await fetch("/api/auth/users");
+      console.log("Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log(
+          "Usuários encontrados:",
+          data.users?.length || 0,
+          data.users
+        );
         setUsers(data.users || []);
+      } else {
+        console.error("Erro ao buscar usuários:", response.status);
+        toast.error("Erro ao carregar lista de usuários");
       }
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
+      toast.error("Erro ao carregar lista de usuários");
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
@@ -209,9 +224,17 @@ export default function MessagesPage() {
             />
             Atualizar
           </Button>
-          <Dialog open={showCompose} onOpenChange={setShowCompose}>
+          <Dialog
+            open={showCompose}
+            onOpenChange={(open) => {
+              setShowCompose(open);
+              if (open) {
+                fetchUsers();
+              }
+            }}
+          >
             <DialogTrigger asChild>
-              <Button onClick={fetchUsers}>
+              <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Mensagem
               </Button>
@@ -234,26 +257,33 @@ export default function MessagesPage() {
                         recipientId: value,
                       }))
                     }
+                    disabled={loadingUsers}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o destinatário" />
+                      <SelectValue
+                        placeholder={
+                          loadingUsers
+                            ? "Carregando usuários..."
+                            : "Selecione o destinatário"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          <div className="flex items-center space-x-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={user.image} />
-                              <AvatarFallback>
-                                {user.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>
-                              {user.name} ({user.email})
-                            </span>
-                          </div>
+                      {loadingUsers ? (
+                        <SelectItem value="loading" disabled>
+                          Carregando usuários...
                         </SelectItem>
-                      ))}
+                      ) : users.length === 0 ? (
+                        <SelectItem value="no-users" disabled>
+                          Nenhum usuário encontrado
+                        </SelectItem>
+                      ) : (
+                        users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.email})
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
