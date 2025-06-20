@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingsList } from "@/components/bookings-list";
+import { Plus } from "lucide-react";
 
 export default function MyBookingsPage() {
   const [status, setStatus] = useState("upcoming");
+  const router = useRouter();
+
+  const handleNewBooking = () => {
+    router.push("/dashboard/schedule");
+  };
 
   return (
     <div className="flex-1 space-y-4">
@@ -14,7 +21,10 @@ export default function MyBookingsPage() {
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
           Meus Agendamentos
         </h2>
-        <Button className="w-full sm:w-auto">Novo Agendamento</Button>
+        <Button className="w-full sm:w-auto" onClick={handleNewBooking}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Agendamento
+        </Button>
       </div>
       <Tabs
         defaultValue="upcoming"
