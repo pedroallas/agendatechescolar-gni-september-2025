@@ -390,14 +390,16 @@ export default function MessagesPage() {
                   />
                 </div>
                 <Select
-                  value={filters.priority}
-                  onValueChange={(value) => applyFilters({ priority: value })}
+                  value={filters.priority || "all"}
+                  onValueChange={(value) =>
+                    applyFilters({ priority: value === "all" ? "" : value })
+                  }
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Prioridade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all">Todas</SelectItem>
                     <SelectItem value="urgent">Urgente</SelectItem>
                     <SelectItem value="high">Alta</SelectItem>
                     <SelectItem value="normal">Normal</SelectItem>
