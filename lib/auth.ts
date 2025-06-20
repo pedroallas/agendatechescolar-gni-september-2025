@@ -1,21 +1,32 @@
-import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-export async function getUser() {
+export async function getUser(request?: NextRequest) {
   try {
-    // Tentar primeiro com NextAuth JWT
-    const cookieStore = await cookies();
-    const nextAuthToken =
-      cookieStore.get("next-auth.session-token")?.value ||
-      cookieStore.get("__Secure-next-auth.session-token")?.value;
+    // Se temos o request, usar diretamente
+    if (request) {
+      const token = await getToken({
+        req: request,
+        secret:
+          process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
+      });
 
-    if (nextAuthToken) {
-      // Usar getToken do NextAuth
+      if (token) {
+        return {
+          id: token.id || token.sub,
+          email: token.email,
+          name: token.name,
+          role: token.role,
+        };
+      }
+    } else {
+      // Fallback para cookies
+      const cookieStore = await cookies();
       const token = await getToken({
         req: {
           cookies: { get: (name: string) => cookieStore.get(name)?.value },
+          headers: { cookie: cookieStore.toString() },
         } as any,
         secret:
           process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
@@ -31,18 +42,7 @@ export async function getUser() {
       }
     }
 
-    // Fallback para JWT personalizado (para compatibilidade)
-    const customToken = cookieStore.get("token")?.value;
-
-    if (!customToken) {
-      return null;
-    }
-
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "fallback_secret"
-    );
-    const { payload } = await jwtVerify(customToken, secret);
-    return payload;
+    return null;
   } catch (error) {
     console.error("Erro ao verificar token:", error);
     return null;

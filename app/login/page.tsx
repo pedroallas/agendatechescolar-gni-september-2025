@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
@@ -34,7 +34,7 @@ import {
   Github,
 } from "lucide-react";
 
-export default function LoginPage() {
+function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginWithGoogle, isLoading } = useAuth();
   const router = useRouter();
@@ -164,7 +164,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="seu.email@escola.edu.br"
+                    placeholder="seu.email@gmail.com"
                     {...register("email")}
                     className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
                   />
@@ -295,7 +295,7 @@ export default function LoginPage() {
           <p className="font-semibold text-blue-900">🧪 Contas de teste:</p>
           <div className="mt-2 space-y-1 text-blue-700">
             <p>
-              <span className="font-medium">Admin:</span> admin@escola.edu.br /
+              <span className="font-medium">Admin:</span> bomdia1295@gmail.com /
               admin123
             </p>
             <p>
@@ -306,5 +306,13 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

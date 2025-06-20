@@ -19,18 +19,18 @@ const updateMessageSchema = z.object({
 // GET - Buscar mensagem específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
 
     // Buscar mensagem
-    const message = await prisma.internalMessage.findFirst({
+    const rawMessage = await prisma.internalMessage.findFirst({
       where: {
         id: messageId,
         OR: [
@@ -73,12 +73,24 @@ export async function GET(
       },
     });
 
-    if (!message) {
+    if (!rawMessage) {
       return NextResponse.json(
         { error: "Mensagem não encontrada" },
         { status: 404 }
       );
     }
+
+    // Processar attachments
+    const message = {
+      ...rawMessage,
+      attachments: rawMessage.attachments
+        ? JSON.parse(rawMessage.attachments)
+        : [],
+      replies: rawMessage.replies.map((reply) => ({
+        ...reply,
+        attachments: reply.attachments ? JSON.parse(reply.attachments) : [],
+      })),
+    };
 
     // Marcar como lida se for o destinatário
     if (message.recipientId === user.id && !message.isRead) {
@@ -106,15 +118,15 @@ export async function GET(
 // POST - Responder mensagem
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
     const body = await request.json();
     const data = replyMessageSchema.parse(body);
 
@@ -147,7 +159,7 @@ export async function POST(
         : originalMessage.senderId;
 
     // Criar resposta
-    const reply = await prisma.messageReply.create({
+    const rawReply = await prisma.messageReply.create({
       data: {
         messageId,
         senderId: user.id as string,
@@ -165,6 +177,12 @@ export async function POST(
         },
       },
     });
+
+    // Processar attachments
+    const reply = {
+      ...rawReply,
+      attachments: rawReply.attachments ? JSON.parse(rawReply.attachments) : [],
+    };
 
     // Atualizar timestamp da mensagem original
     await prisma.internalMessage.update({
@@ -216,15 +234,15 @@ export async function POST(
 // PATCH - Atualizar mensagem (marcar como lida, favorita, etc.)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
     const body = await request.json();
     const data = updateMessageSchema.parse(body);
 
@@ -265,7 +283,7 @@ export async function PATCH(
     }
 
     // Atualizar mensagem
-    const updatedMessage = await prisma.internalMessage.update({
+    const rawUpdatedMessage = await prisma.internalMessage.update({
       where: { id: messageId },
       data: updateData,
       include: {
@@ -288,6 +306,14 @@ export async function PATCH(
       },
     });
 
+    // Processar attachments
+    const updatedMessage = {
+      ...rawUpdatedMessage,
+      attachments: rawUpdatedMessage.attachments
+        ? JSON.parse(rawUpdatedMessage.attachments)
+        : [],
+    };
+
     return NextResponse.json(updatedMessage);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -308,15 +334,15 @@ export async function PATCH(
 // DELETE - Excluir mensagem
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
 
     // Verificar se a mensagem existe e o usuário tem permissão
     const message = await prisma.internalMessage.findFirst({

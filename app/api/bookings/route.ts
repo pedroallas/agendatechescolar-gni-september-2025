@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export async function GET(request: Request) {
   try {

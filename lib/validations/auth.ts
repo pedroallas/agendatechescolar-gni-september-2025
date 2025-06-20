@@ -1,14 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "E-mail é obrigatório")
-    .email("E-mail inválido")
-    .refine(
-      (email) => email.endsWith("@escola.edu.br") || email.endsWith(".edu.br"),
-      "Use seu e-mail institucional"
-    ),
+  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
   password: z.string().min(1, "Senha é obrigatória"),
 });
 
@@ -19,15 +12,7 @@ export const registerSchema = z
       .min(1, "Nome é obrigatório")
       .min(3, "Nome deve ter pelo menos 3 caracteres")
       .max(100, "Nome muito longo"),
-    email: z
-      .string()
-      .min(1, "E-mail é obrigatório")
-      .email("E-mail inválido")
-      .refine(
-        (email) =>
-          email.endsWith("@escola.edu.br") || email.endsWith(".edu.br"),
-        "Use seu e-mail institucional (.edu.br)"
-      ),
+    email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
     password: z
       .string()
       .min(1, "Senha é obrigatória")
@@ -49,14 +34,7 @@ export const registerSchema = z
   });
 
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, "E-mail é obrigatório")
-    .email("E-mail inválido")
-    .refine(
-      (email) => email.endsWith("@escola.edu.br") || email.endsWith(".edu.br"),
-      "Use seu e-mail institucional"
-    ),
+  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
 });
 
 export const resetPasswordSchema = z

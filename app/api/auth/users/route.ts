@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // GET - Buscar lista de usuários para mensagens
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }

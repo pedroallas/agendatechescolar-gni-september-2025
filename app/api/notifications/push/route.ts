@@ -5,11 +5,14 @@ import { z } from "zod";
 import webpush from "web-push";
 
 // Configurar VAPID keys para Web Push
-webpush.setVapidDetails(
-  "mailto:admin@agendatech.edu.br",
-  process.env.VAPID_PUBLIC_KEY || "BHdVZWJwdXNoLXRlc3QtcHVibGljLWtleQ",
-  process.env.VAPID_PRIVATE_KEY || "webpush-test-private-key"
-);
+// Apenas configurar se as chaves estiverem definidas
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    "mailto:admin@agendatech.edu.br",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 // Schema para subscrição push
 const pushSubscriptionSchema = z.object({

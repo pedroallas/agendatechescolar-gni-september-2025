@@ -27,7 +27,7 @@ const updateNotificationSchema = z.object({
 // GET - Listar notificações do usuário
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar nova notificação
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
 // PUT - Marcar todas como lidas
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }

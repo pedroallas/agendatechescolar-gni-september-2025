@@ -29,6 +29,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -70,12 +80,14 @@ const priorityIcons = {
 };
 
 export default function MessagesPage() {
-  const [activeTab, setActiveTab] = useState<"inbox" | "sent" | "drafts">(
-    "inbox"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "inbox" | "sent" | "drafts" | "archived"
+  >("inbox");
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [showReply, setShowReply] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
@@ -107,6 +119,8 @@ export default function MessagesPage() {
   // Formulário de resposta
   const [replyForm, setReplyForm] = useState({
     content: "",
+    originalSubject: "",
+    originalSender: "",
   });
 
   // Buscar usuários para destinatários
@@ -135,7 +149,13 @@ export default function MessagesPage() {
 
   // Abrir mensagem
   const openMessage = async (message: Message) => {
-    setSelectedMessage(message);
+    // Garantir que replies sempre seja um array
+    const messageWithReplies = {
+      ...message,
+      replies: message.replies || [],
+    };
+
+    setSelectedMessage(messageWithReplies);
 
     // Marcar como lida se não foi lida
     if (!message.isRead && activeTab === "inbox") {
@@ -168,6 +188,29 @@ export default function MessagesPage() {
     }
   };
 
+  // Abrir modal de resposta
+  const openReplyModal = (message: Message) => {
+    setReplyForm({
+      content: "",
+      originalSubject: message.subject,
+      originalSender: message.sender.name,
+    });
+    setShowReply(true);
+  };
+
+  // Buscar mensagem específica
+  const fetchSingleMessage = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/messages/${messageId}`);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error("Erro ao buscar mensagem:", error);
+    }
+    return null;
+  };
+
   // Enviar resposta
   const handleSendReply = async () => {
     if (!selectedMessage || !replyForm.content) {
@@ -176,12 +219,12 @@ export default function MessagesPage() {
     }
 
     try {
-      await replyMessage(selectedMessage.id, replyForm);
-      setReplyForm({ content: "" });
+      await replyMessage(selectedMessage.id, { content: replyForm.content });
+      setReplyForm({ content: "", originalSubject: "", originalSender: "" });
       setShowReply(false);
 
       // Recarregar mensagem para mostrar nova resposta
-      const updatedMessage = await fetchMessage(selectedMessage.id);
+      const updatedMessage = await fetchSingleMessage(selectedMessage.id);
       if (updatedMessage) {
         setSelectedMessage(updatedMessage);
       }
@@ -190,14 +233,62 @@ export default function MessagesPage() {
     }
   };
 
+  // Confirmar exclusão
+  const confirmDelete = (message: Message) => {
+    setMessageToDelete(message);
+    setShowDeleteConfirm(true);
+  };
+
+  // Executar exclusão
+  const handleDelete = async () => {
+    if (!messageToDelete) return;
+
+    try {
+      await deleteMessage(messageToDelete.id);
+      setShowDeleteConfirm(false);
+      setMessageToDelete(null);
+      setSelectedMessage(null);
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  };
+
   // Favoritar/desfavoritar
   const toggleStar = async (message: Message) => {
-    await updateMessage(message.id, { isStarred: !message.isStarred });
+    const updatedMessage = await updateMessage(message.id, {
+      isStarred: !message.isStarred,
+    });
+
+    // Atualizar mensagem selecionada se for a mesma
+    if (selectedMessage?.id === message.id && updatedMessage) {
+      setSelectedMessage(updatedMessage);
+    }
   };
 
   // Arquivar/desarquivar
   const toggleArchive = async (message: Message) => {
-    await updateMessage(message.id, { isArchived: !message.isArchived });
+    const wasArchived = message.isArchived;
+    const updatedMessage = await updateMessage(message.id, {
+      isArchived: !message.isArchived,
+    });
+
+    // Se a mensagem foi arquivada/desarquivada, limpar seleção e atualizar lista
+    if (updatedMessage) {
+      // Limpar mensagem selecionada se for a mesma que foi arquivada/desarquivada
+      if (selectedMessage?.id === message.id) {
+        setSelectedMessage(null);
+      }
+
+      // Mostrar feedback ao usuário
+      if (!wasArchived) {
+        toast.success("Mensagem arquivada com sucesso!");
+      } else {
+        toast.success("Mensagem desarquivada com sucesso!");
+      }
+
+      // Forçar atualização da lista atual para remover/adicionar a mensagem
+      refresh();
+    }
   };
 
   return (
@@ -440,7 +531,7 @@ export default function MessagesPage() {
                 value={activeTab}
                 onValueChange={(value: any) => setActiveTab(value)}
               >
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="inbox">
                     Caixa de Entrada
                     {stats.unread > 0 && (
@@ -454,6 +545,7 @@ export default function MessagesPage() {
                   </TabsTrigger>
                   <TabsTrigger value="sent">Enviadas</TabsTrigger>
                   <TabsTrigger value="drafts">Rascunhos</TabsTrigger>
+                  <TabsTrigger value="archived">Arquivadas</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value={activeTab} className="mt-0">
@@ -469,34 +561,44 @@ export default function MessagesPage() {
                     ) : (
                       <div className="space-y-1">
                         {messages.map((message) => {
-                          const PriorityIcon = priorityIcons[message.priority];
-                          const isSelected = selectedMessage?.id === message.id;
+                          // Garantir que replies sempre seja um array
+                          const messageWithReplies = {
+                            ...message,
+                            replies: message.replies || [],
+                          };
+
+                          const PriorityIcon =
+                            priorityIcons[messageWithReplies.priority];
+                          const isSelected =
+                            selectedMessage?.id === messageWithReplies.id;
 
                           return (
                             <div
-                              key={message.id}
+                              key={messageWithReplies.id}
                               className={cn(
                                 "p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors",
                                 isSelected && "bg-muted",
-                                !message.isRead &&
+                                !messageWithReplies.isRead &&
                                   activeTab === "inbox" &&
                                   "bg-blue-50/50"
                               )}
-                              onClick={() => openMessage(message)}
+                              onClick={() => openMessage(messageWithReplies)}
                             >
                               <div className="flex items-start space-x-3">
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage
                                     src={
                                       activeTab === "inbox"
-                                        ? message.sender.image
-                                        : message.recipient.image
+                                        ? messageWithReplies.sender.image
+                                        : messageWithReplies.recipient.image
                                     }
                                   />
                                   <AvatarFallback>
                                     {activeTab === "inbox"
-                                      ? message.sender.name.charAt(0)
-                                      : message.recipient.name.charAt(0)}
+                                      ? messageWithReplies.sender.name.charAt(0)
+                                      : messageWithReplies.recipient.name.charAt(
+                                          0
+                                        )}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
@@ -504,25 +606,25 @@ export default function MessagesPage() {
                                     <p
                                       className={cn(
                                         "text-sm font-medium truncate",
-                                        !message.isRead &&
+                                        !messageWithReplies.isRead &&
                                           activeTab === "inbox" &&
                                           "font-semibold"
                                       )}
                                     >
                                       {activeTab === "inbox"
-                                        ? message.sender.name
-                                        : message.recipient.name}
+                                        ? messageWithReplies.sender.name
+                                        : messageWithReplies.recipient.name}
                                     </p>
                                     <div className="flex items-center space-x-1">
                                       <PriorityIcon
                                         className={cn(
                                           "h-3 w-3",
                                           priorityColors[
-                                            message.priority
+                                            messageWithReplies.priority
                                           ].split(" ")[0]
                                         )}
                                       />
-                                      {message.isStarred && (
+                                      {messageWithReplies.isStarred && (
                                         <Star className="h-3 w-3 text-yellow-500 fill-current" />
                                       )}
                                     </div>
@@ -530,31 +632,35 @@ export default function MessagesPage() {
                                   <p
                                     className={cn(
                                       "text-sm truncate",
-                                      !message.isRead && activeTab === "inbox"
+                                      !messageWithReplies.isRead &&
+                                        activeTab === "inbox"
                                         ? "font-medium text-foreground"
                                         : "text-muted-foreground"
                                     )}
                                   >
-                                    {message.subject}
+                                    {messageWithReplies.subject}
                                   </p>
                                   <p className="text-xs text-muted-foreground truncate">
-                                    {message.content}
+                                    {messageWithReplies.content}
                                   </p>
                                   <div className="flex items-center justify-between mt-1">
                                     <span className="text-xs text-muted-foreground">
                                       {format(
-                                        new Date(message.createdAt),
+                                        new Date(messageWithReplies.createdAt),
                                         "dd/MM/yyyy HH:mm",
                                         { locale: ptBR }
                                       )}
                                     </span>
-                                    {message.replies.length > 0 && (
+                                    {messageWithReplies.replies?.length > 0 && (
                                       <Badge
                                         variant="secondary"
                                         className="text-xs"
                                       >
-                                        {message.replies.length} resposta
-                                        {message.replies.length > 1 ? "s" : ""}
+                                        {messageWithReplies.replies.length}{" "}
+                                        resposta
+                                        {messageWithReplies.replies.length > 1
+                                          ? "s"
+                                          : ""}
                                       </Badge>
                                     )}
                                   </div>
@@ -628,17 +734,23 @@ export default function MessagesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleArchive(selectedMessage)}
+                      title={
+                        selectedMessage.isArchived ? "Desarquivar" : "Arquivar"
+                      }
                     >
                       <Archive className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => deleteMessage(selectedMessage.id)}
+                      onClick={() => confirmDelete(selectedMessage)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" onClick={() => setShowReply(true)}>
+                    <Button
+                      size="sm"
+                      onClick={() => openReplyModal(selectedMessage)}
+                    >
                       <Reply className="h-4 w-4 mr-2" />
                       Responder
                     </Button>
@@ -654,7 +766,7 @@ export default function MessagesPage() {
                       </p>
                     </div>
 
-                    {selectedMessage.replies.length > 0 && (
+                    {selectedMessage.replies?.length > 0 && (
                       <>
                         <Separator />
                         <div className="space-y-4">
@@ -694,35 +806,6 @@ export default function MessagesPage() {
                     )}
                   </div>
                 </ScrollArea>
-
-                {showReply && (
-                  <>
-                    <Separator className="my-4" />
-                    <div className="space-y-4">
-                      <Label>Sua Resposta</Label>
-                      <Textarea
-                        value={replyForm.content}
-                        onChange={(e) =>
-                          setReplyForm({ content: e.target.value })
-                        }
-                        placeholder="Digite sua resposta..."
-                        rows={4}
-                      />
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowReply(false)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button onClick={handleSendReply}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Enviar Resposta
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
           ) : (
@@ -736,6 +819,84 @@ export default function MessagesPage() {
             </Card>
           )}
         </div>
+
+        {/* Modal de confirmação de exclusão */}
+        <AlertDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta mensagem? Esta ação não pode
+                ser desfeita.
+                {messageToDelete && (
+                  <div className="mt-2 p-2 bg-muted rounded text-sm">
+                    <strong>Assunto:</strong> {messageToDelete.subject}
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Modal de resposta */}
+        <Dialog open={showReply} onOpenChange={setShowReply}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Responder Mensagem</DialogTitle>
+              <DialogDescription>Responda à mensagem abaixo</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Respondendo para:</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>
+                    <strong>De:</strong> {replyForm.originalSender}
+                  </p>
+                  <p>
+                    <strong>Assunto:</strong> Re: {replyForm.originalSubject}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="reply-content-modal">Sua Resposta</Label>
+                <Textarea
+                  id="reply-content-modal"
+                  value={replyForm.content}
+                  onChange={(e) =>
+                    setReplyForm((prev) => ({
+                      ...prev,
+                      content: e.target.value,
+                    }))
+                  }
+                  placeholder="Digite sua resposta..."
+                  rows={6}
+                  className="mt-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setShowReply(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSendReply}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Resposta
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

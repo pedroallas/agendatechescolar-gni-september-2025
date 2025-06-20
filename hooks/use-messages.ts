@@ -68,7 +68,7 @@ interface MessagesState {
 }
 
 interface UseMessagesOptions {
-  type?: "inbox" | "sent" | "drafts";
+  type?: "inbox" | "sent" | "drafts" | "archived";
   autoRefresh?: boolean;
   refreshInterval?: number;
 }

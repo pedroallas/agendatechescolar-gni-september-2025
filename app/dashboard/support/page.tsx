@@ -232,12 +232,26 @@ export default function SupportCenter() {
       </div>
 
       <Tabs defaultValue="tickets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList
+          className={`grid w-full ${
+            session?.user?.role === "admin" || session?.user?.role === "diretor"
+              ? "grid-cols-4"
+              : "grid-cols-4"
+          }`}
+        >
           <TabsTrigger value="tickets">Meus Tickets</TabsTrigger>
           <TabsTrigger value="new-ticket">Reportar Problema</TabsTrigger>
           <TabsTrigger value="tutorials">Tutoriais</TabsTrigger>
           <TabsTrigger value="faq">FAQ</TabsTrigger>
         </TabsList>
+
+        {/* Debug: Mostrar role do usuário */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="text-sm text-muted-foreground mb-4">
+            Debug: Usuário logado como "{session?.user?.role}" | Email:{" "}
+            {session?.user?.email}
+          </div>
+        )}
 
         {/* Meus Tickets */}
         <TabsContent value="tickets" className="space-y-4">

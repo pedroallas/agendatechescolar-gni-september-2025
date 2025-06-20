@@ -15,7 +15,7 @@ const createMessageSchema = z.object({
 // GET - Listar mensagens do usuário
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -34,13 +34,29 @@ export async function GET(request: NextRequest) {
     if (type === "inbox") {
       where.recipientId = user.id as string;
       where.deletedByRecipient = false;
+      where.isArchived = false;
     } else if (type === "sent") {
       where.senderId = user.id as string;
       where.deletedBySender = false;
+      where.isArchived = false;
     } else if (type === "drafts") {
       where.senderId = user.id as string;
       where.isDraft = true;
       where.deletedBySender = false;
+      where.isArchived = false;
+    } else if (type === "archived") {
+      where.OR = [
+        {
+          recipientId: user.id as string,
+          isArchived: true,
+          deletedByRecipient: false,
+        },
+        {
+          senderId: user.id as string,
+          isArchived: true,
+          deletedBySender: false,
+        },
+      ];
     }
 
     // Filtros adicionais
@@ -62,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar mensagens com relacionamentos
-    const [messages, total] = await Promise.all([
+    const [rawMessages, total] = await Promise.all([
       prisma.internalMessage.findMany({
         where,
         include: {
@@ -104,6 +120,16 @@ export async function GET(request: NextRequest) {
       prisma.internalMessage.count({ where }),
     ]);
 
+    // Processar attachments (converter JSON string para array)
+    const messages = rawMessages.map((message) => ({
+      ...message,
+      attachments: message.attachments ? JSON.parse(message.attachments) : [],
+      replies: message.replies.map((reply) => ({
+        ...reply,
+        attachments: reply.attachments ? JSON.parse(reply.attachments) : [],
+      })),
+    }));
+
     // Estatísticas para inbox
     let stats = {};
     if (type === "inbox") {
@@ -113,6 +139,7 @@ export async function GET(request: NextRequest) {
           recipientId: user.id as string,
           isDraft: false,
           deletedByRecipient: false,
+          isArchived: false,
         },
         _count: true,
       });
@@ -149,7 +176,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar nova mensagem
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -171,7 +198,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar mensagem
-    const message = await prisma.internalMessage.create({
+    const rawMessage = await prisma.internalMessage.create({
       data: {
         senderId: user.id as string,
         recipientId: data.recipientId,
@@ -200,6 +227,14 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Processar attachments
+    const message = {
+      ...rawMessage,
+      attachments: rawMessage.attachments
+        ? JSON.parse(rawMessage.attachments)
+        : [],
+    };
 
     // Criar notificação para o destinatário
     await prisma.notification.create({
@@ -239,7 +274,7 @@ export async function POST(request: NextRequest) {
 // PUT - Marcar mensagens como lidas
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getUser();
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
