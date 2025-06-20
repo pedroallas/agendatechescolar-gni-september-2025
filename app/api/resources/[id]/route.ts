@@ -134,6 +134,71 @@ export async function PUT(
       );
     }
 
+    // Gerenciar manutenção implícita baseada na mudança de status
+    const oldStatus = existingResource.status;
+    const newStatus = body.status;
+
+    // Se mudou de "available" para "maintenance" ou "unavailable"
+    if (
+      oldStatus === "available" &&
+      (newStatus === "maintenance" || newStatus === "unavailable")
+    ) {
+      // Verificar se já existe uma manutenção implícita ativa
+      const existingImplicitMaintenance =
+        await prisma.maintenanceRecord.findFirst({
+          where: {
+            resourceId: id,
+            type: "administrative",
+            status: "pending",
+          },
+        });
+
+      // Se não existe, criar registro de manutenção implícita
+      if (!existingImplicitMaintenance) {
+        await prisma.maintenanceRecord.create({
+          data: {
+            resourceId: id,
+            userId: user.id,
+            type: "administrative",
+            priority: "medium",
+            status: "pending",
+            description: `Recurso marcado como ${
+              newStatus === "maintenance" ? "em manutenção" : "indisponível"
+            } pelo administrador`,
+            reportedAt: new Date(),
+          },
+        });
+        console.log(
+          `📝 Manutenção implícita criada para recurso ${id} - Status: ${newStatus}`
+        );
+      }
+    }
+
+    // Se mudou de "maintenance"/"unavailable" para "available"
+    if (
+      (oldStatus === "maintenance" || oldStatus === "unavailable") &&
+      newStatus === "available"
+    ) {
+      // Remover manutenção implícita pendente
+      const implicitMaintenanceToRemove =
+        await prisma.maintenanceRecord.findFirst({
+          where: {
+            resourceId: id,
+            type: "administrative",
+            status: "pending",
+          },
+        });
+
+      if (implicitMaintenanceToRemove) {
+        await prisma.maintenanceRecord.delete({
+          where: { id: implicitMaintenanceToRemove.id },
+        });
+        console.log(
+          `🗑️ Manutenção implícita removida para recurso ${id} - Status: ${newStatus}`
+        );
+      }
+    }
+
     // Atualizar recurso
     const updatedResource = await prisma.resource.update({
       where: { id },

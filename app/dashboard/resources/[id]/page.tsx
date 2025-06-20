@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { ResourceGallery } from "@/components/resource-gallery";
 import { ResourceRatings } from "@/components/resource-ratings";
 import { ResourceMaintenance } from "@/components/resource-maintenance";
+import { QRCodeManager } from "@/components/qr-code-manager";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -351,6 +352,13 @@ export default function ResourceDetailsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* QR Code */}
+          <QRCodeManager
+            resourceId={resource.id}
+            resourceName={resource.name}
+            isAdmin={isAdmin}
+          />
         </div>
 
         {/* Sistema de Avaliações */}

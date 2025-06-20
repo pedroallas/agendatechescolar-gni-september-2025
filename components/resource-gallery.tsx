@@ -581,6 +581,9 @@ export function ResourceGallery({
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Visualizar Imagem</DialogTitle>
+          </DialogHeader>
           <div className="relative">
             <Image
               src={currentImage.imageUrl}

@@ -13,6 +13,8 @@ import {
   Package,
   ClipboardList,
   CheckCircle,
+  BarChart3,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -63,6 +65,25 @@ export function DashboardNav({
       title: "Aprovações",
       icon: <CheckCircle className="mr-2 h-4 w-4" />,
     },
+    {
+      href: "/dashboard/reports",
+      title: "Relatórios",
+      icon: <BarChart3 className="mr-2 h-4 w-4" />,
+    },
+    {
+      href: "/dashboard/support",
+      title: "Suporte",
+      icon: <HelpCircle className="mr-2 h-4 w-4" />,
+    },
+  ];
+
+  // Itens apenas para professores
+  const teacherItems = [
+    {
+      href: "/dashboard/support",
+      title: "Suporte",
+      icon: <HelpCircle className="mr-2 h-4 w-4" />,
+    },
   ];
 
   // Item de configurações para todos
@@ -75,10 +96,10 @@ export function DashboardNav({
   // Montar lista de itens baseado no papel do usuário
   const defaultItems = [
     ...baseItems,
-    // Adicionar aprovações apenas para administradores
+    // Adicionar itens específicos baseado no papel do usuário
     ...(user?.role === "diretor" || user?.role === "coordenador"
       ? adminItems
-      : []),
+      : teacherItems),
     settingsItem,
   ];
 

@@ -69,7 +69,7 @@ export default function EditResourcePage() {
     try {
       setIsSubmitting(true);
       const res = await fetch(`/api/resources/${id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -77,8 +77,25 @@ export default function EditResourcePage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Falha ao atualizar recurso");
+        let errorMessage = "Falha ao atualizar recurso";
+        try {
+          const data = await res.json();
+          errorMessage = data.error || errorMessage;
+        } catch (jsonError) {
+          console.error("Erro ao parsear JSON de erro:", jsonError);
+          errorMessage = `Erro ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Tentar parsear resposta de sucesso
+      try {
+        const result = await res.json();
+        console.log("Recurso atualizado com sucesso:", result);
+      } catch (jsonError) {
+        console.warn(
+          "Resposta de sucesso não é JSON válido, mas operação foi bem-sucedida"
+        );
       }
 
       router.push("/dashboard/resources");

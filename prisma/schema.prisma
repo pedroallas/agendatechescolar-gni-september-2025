@@ -22,6 +22,7 @@ model User {
   sessions      Session[]
   ratings       ResourceRating[] // Avaliações feitas pelo usuário
   maintenanceReports MaintenanceRecord[] // Relatórios de manutenção criados
+  supportTickets SupportTicket[] // Tickets de suporte criados pelo usuário
 }
 
 model Account {
@@ -84,6 +85,7 @@ model Resource {
   images            ResourceImage[]    // Galeria de imagens
   ratings           ResourceRating[]   // Avaliações dos usuários
   maintenanceHistory MaintenanceRecord[] // Histórico de manutenção
+  supportTickets    SupportTicket[]    // Tickets de suporte relacionados
 }
 
 // Nova tabela para galeria de imagens dos recursos
@@ -122,7 +124,7 @@ model MaintenanceRecord {
   id            String   @id @default(cuid())
   resourceId    String
   userId        String   // Quem reportou a manutenção
-  type          String   // preventive, corrective, emergency
+  type          String   // preventive, corrective, emergency, administrative
   priority      String   // low, medium, high, urgent
   status        String   @default("pending") // pending, in_progress, completed, cancelled
   description   String   // Descrição do problema/serviço
@@ -184,4 +186,22 @@ model MaintenanceBlock {
   updatedAt   DateTime  @updatedAt
   resource    Resource  @relation(fields: [resourceId], references: [id])
   timeBlock   TimeBlock @relation(fields: [timeBlockId], references: [id])
+}
+
+// Modelo para tickets de suporte
+model SupportTicket {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  priority    String   // low, medium, high, urgent
+  status      String   @default("open") // open, in_progress, resolved, closed
+  userId      String
+  resourceId  String?  // Opcional - ticket pode ser sobre um recurso específico
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource    Resource? @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([resourceId])
 }

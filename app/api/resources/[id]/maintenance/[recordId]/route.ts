@@ -103,21 +103,24 @@ export async function PUT(
 
     // Atualizar status do recurso baseado na manutenção
     if (status === "completed") {
-      // Se a manutenção foi concluída, verificar se há outras pendentes
-      const pendingMaintenance = await prisma.maintenanceRecord.findFirst({
+      // Se a manutenção foi concluída, verificar se há outras ativas
+      const activeMaintenance = await prisma.maintenanceRecord.findFirst({
         where: {
           resourceId: id,
           status: { in: ["pending", "in_progress"] },
-          priority: { in: ["high", "urgent"] },
+          id: { not: recordId }, // Excluir o registro atual
         },
       });
 
-      // Se não há manutenções urgentes pendentes, marcar como disponível
-      if (!pendingMaintenance) {
+      // Se não há outras manutenções ativas, marcar recurso como disponível
+      if (!activeMaintenance) {
         await prisma.resource.update({
           where: { id },
           data: { status: "available" },
         });
+        console.log(
+          `🔄 Recurso ${id} marcado como disponível - todas as manutenções concluídas`
+        );
       }
     }
 

@@ -9,13 +9,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Plus, Calendar, FileText, Settings } from "lucide-react";
+import { Plus, Calendar, FileText, Settings, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 export function QuickActions() {
   const router = useRouter();
+  const { user } = useAuth();
 
-  const actions = [
+  // Ações base para todos os usuários
+  const baseActions = [
     {
       title: "Novo Agendamento",
       description: "Reserve um recurso",
@@ -30,6 +33,10 @@ export function QuickActions() {
       onClick: () => router.push("/dashboard/my-bookings"),
       color: "bg-green-100 text-green-600 hover:bg-green-200",
     },
+  ];
+
+  // Ações específicas para administradores
+  const adminActions = [
     {
       title: "Relatórios",
       description: "Análises e dados",
@@ -45,6 +52,32 @@ export function QuickActions() {
       color: "bg-orange-100 text-orange-600 hover:bg-orange-200",
     },
   ];
+
+  // Ações específicas para professores
+  const teacherActions = [
+    {
+      title: "Central de Suporte",
+      description: "Ajuda e suporte técnico",
+      icon: HelpCircle,
+      onClick: () => router.push("/dashboard/support"),
+      color: "bg-purple-100 text-purple-600 hover:bg-purple-200",
+    },
+    {
+      title: "Configurações",
+      description: "Preferências do sistema",
+      icon: Settings,
+      onClick: () => router.push("/dashboard/settings"),
+      color: "bg-orange-100 text-orange-600 hover:bg-orange-200",
+    },
+  ];
+
+  // Determinar quais ações mostrar baseado no papel do usuário
+  const specificActions =
+    user?.role === "diretor" || user?.role === "coordenador"
+      ? adminActions
+      : teacherActions;
+
+  const actions = [...baseActions, ...specificActions];
 
   return (
     <motion.div

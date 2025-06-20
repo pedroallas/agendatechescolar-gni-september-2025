@@ -92,6 +92,14 @@ export function ResourceMaintenance({
   const [selectedRecord, setSelectedRecord] =
     useState<MaintenanceRecord | null>(null);
 
+  // Dialog states for confirmation
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordToComplete, setRecordToComplete] =
+    useState<MaintenanceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] =
+    useState<MaintenanceRecord | null>(null);
+
   // Form states for new record
   const [newType, setNewType] = useState("");
   const [newPriority, setNewPriority] = useState("");
@@ -204,13 +212,60 @@ export function ResourceMaintenance({
     }
   };
 
-  // Deletar registro
-  const handleDeleteRecord = async (recordId: string) => {
-    if (!confirm("Tem certeza que deseja remover este registro?")) return;
+  // Abrir dialog de conclusão
+  const openCompleteDialog = (record: MaintenanceRecord) => {
+    setRecordToComplete(record);
+    setCompleteDialogOpen(true);
+  };
 
+  // Concluir manutenção
+  const handleCompleteRecord = async () => {
+    if (!recordToComplete) return;
+
+    setSubmitting(true);
     try {
       const response = await fetch(
-        `/api/resources/${resourceId}/maintenance/${recordId}`,
+        `/api/resources/${resourceId}/maintenance/${recordToComplete.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "completed",
+            resolvedAt: new Date().toISOString(),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Manutenção concluída com sucesso!");
+        setCompleteDialogOpen(false);
+        setRecordToComplete(null);
+        await loadMaintenanceRecords();
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erro ao concluir manutenção");
+      }
+    } catch (error) {
+      toast.error("Erro ao concluir manutenção");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Abrir dialog de exclusão
+  const openDeleteDialog = (record: MaintenanceRecord) => {
+    setRecordToDelete(record);
+    setDeleteDialogOpen(true);
+  };
+
+  // Deletar registro
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(
+        `/api/resources/${resourceId}/maintenance/${recordToDelete.id}`,
         {
           method: "DELETE",
         }
@@ -218,6 +273,8 @@ export function ResourceMaintenance({
 
       if (response.ok) {
         toast.success("Registro removido com sucesso!");
+        setDeleteDialogOpen(false);
+        setRecordToDelete(null);
         await loadMaintenanceRecords();
       } else {
         const error = await response.json();
@@ -225,6 +282,8 @@ export function ResourceMaintenance({
       }
     } catch (error) {
       toast.error("Erro ao remover registro");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -259,6 +318,8 @@ export function ResourceMaintenance({
         return "Corretiva";
       case "emergency":
         return "Emergência";
+      case "administrative":
+        return "Administrativa";
       default:
         return type;
     }
@@ -521,7 +582,11 @@ export function ResourceMaintenance({
                 {records.map((record) => (
                   <div
                     key={record.id}
-                    className="border rounded-lg p-4 space-y-3"
+                    className={`border rounded-lg p-4 space-y-3 ${
+                      record.type === "administrative"
+                        ? "bg-blue-50 border-blue-200"
+                        : ""
+                    }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 space-y-2">
@@ -533,11 +598,38 @@ export function ResourceMaintenance({
                           <Badge className={getPriorityColor(record.priority)}>
                             {getPriorityText(record.priority)}
                           </Badge>
-                          <Badge variant="outline">
+                          <Badge
+                            variant={
+                              record.type === "administrative"
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={
+                              record.type === "administrative"
+                                ? "bg-blue-100 text-blue-800 border-blue-300"
+                                : ""
+                            }
+                          >
                             {getTypeText(record.type)}
                           </Badge>
+                          {record.type === "administrative" && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-blue-50 text-blue-600 border-blue-300"
+                            >
+                              Auto
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-gray-700">{record.description}</p>
+                        <p
+                          className={`${
+                            record.type === "administrative"
+                              ? "text-blue-700"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {record.description}
+                        </p>
                         {record.solution && (
                           <div className="bg-green-50 p-2 rounded">
                             <p className="text-sm text-green-800">
@@ -566,17 +658,31 @@ export function ResourceMaintenance({
                       </div>
                       {(isAdmin || record.user.id === session?.user?.id) && (
                         <div className="flex space-x-1">
+                          {record.status === "in_progress" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openCompleteDialog(record)}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              title="Concluir Manutenção"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => openEditRecord(record)}
+                            title="Editar"
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteRecord(record.id)}
+                            onClick={() => openDeleteDialog(record)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -678,6 +784,120 @@ export function ResourceMaintenance({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Dialog de Confirmação de Conclusão */}
+      <Dialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span>Concluir Manutenção</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <p className="text-sm text-green-800">
+                <strong>Confirma a conclusão desta manutenção?</strong>
+              </p>
+              {recordToComplete && (
+                <div className="mt-2 text-sm text-green-700">
+                  <p>
+                    <strong>Tipo:</strong> {getTypeText(recordToComplete.type)}
+                  </p>
+                  <p>
+                    <strong>Descrição:</strong> {recordToComplete.description}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-800">
+                <strong>Atenção:</strong> Ao concluir, o recurso voltará a ficar
+                disponível para agendamentos.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCompleteDialogOpen(false);
+                  setRecordToComplete(null);
+                }}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCompleteRecord}
+                disabled={submitting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {submitting ? "Concluindo..." : "Concluir Manutenção"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Trash2 className="h-5 w-5 text-red-600" />
+              <span>Excluir Registro</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <p className="text-sm text-red-800">
+                <strong>
+                  Tem certeza que deseja excluir este registro de manutenção?
+                </strong>
+              </p>
+              {recordToDelete && (
+                <div className="mt-2 text-sm text-red-700">
+                  <p>
+                    <strong>Tipo:</strong> {getTypeText(recordToDelete.type)}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {getStatusText(recordToDelete.status)}
+                  </p>
+                  <p>
+                    <strong>Descrição:</strong> {recordToDelete.description}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+              <p className="text-xs text-yellow-800">
+                <strong>Atenção:</strong> Esta ação não pode ser desfeita. O
+                histórico será perdido permanentemente.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setRecordToDelete(null);
+                }}
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleDeleteRecord}
+                disabled={submitting}
+                variant="destructive"
+              >
+                {submitting ? "Excluindo..." : "Excluir Registro"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

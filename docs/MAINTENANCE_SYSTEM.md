@@ -2,7 +2,42 @@
 
 ## 📋 Visão Geral
 
-O Sistema de Manutenção permite o controle completo do histórico de manutenção dos recursos da escola. **Apenas administradores (diretores e coordenadores) podem reportar manutenção**, garantindo controle centralizado sobre os registros de manutenção.
+O Sistema de Manutenção permite o controle completo do histórico de manutenção dos recursos da escola, incluindo:
+
+- **Manutenção Manual**: Reportada diretamente pelos administradores
+- **Manutenção Implícita**: Criada automaticamente quando o status do recurso é alterado
+- **Controle Centralizado**: Apenas administradores (diretores e coordenadores) podem reportar manutenção
+
+## 🔄 Sistema de Manutenção Implícita (Novo)
+
+### Como Funciona
+
+O sistema agora cria automaticamente registros de manutenção quando administradores alteram o status dos recursos:
+
+#### Cenários de Criação Automática:
+
+- **Recurso marcado como "Em Manutenção"** → Cria manutenção implícita pendente
+- **Recurso marcado como "Indisponível"** → Cria manutenção implícita pendente
+
+#### Cenários de Remoção Automática:
+
+- **Recurso volta para "Disponível"** → Remove manutenção implícita
+- **Manutenção real é reportada** → Substitui a implícita pela real
+
+### Características da Manutenção Implícita:
+
+- **Tipo**: "administrative" (Administrativa)
+- **Status**: "pending" (Pendente)
+- **Prioridade**: "medium" (Média)
+- **Aparência**: Fundo azul claro com badge "Auto"
+- **Descrição**: Gerada automaticamente baseada no status
+
+### Benefícios:
+
+1. **Visibilidade Total**: Todo período de indisponibilidade fica registrado
+2. **Automação Inteligente**: Reduz trabalho manual dos administradores
+3. **Histórico Completo**: Não perde informação de quando recursos ficaram indisponíveis
+4. **Flexibilidade**: Permite tanto controle rápido quanto detalhado
 
 ## ✨ Funcionalidades Principais
 
@@ -180,7 +215,7 @@ model MaintenanceRecord {
   id            String   @id @default(cuid())
   resourceId    String
   userId        String   // Quem reportou
-  type          String   // preventive, corrective, emergency
+  type          String   // preventive, corrective, emergency, administrative
   priority      String   // low, medium, high, urgent
   status        String   @default("pending")
   description   String   // Descrição do problema

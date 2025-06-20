@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { CalendarDateRangePicker } from "@/components/date-range-picker"
-import { Download } from "lucide-react"
-import type { DateRange } from "react-day-picker"
-import { Line, Bar, Pie } from "react-chartjs-2"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { CalendarDateRangePicker } from "@/components/date-range-picker";
+import { Download } from "lucide-react";
+import type { DateRange } from "react-day-picker";
+import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,22 +25,41 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js"
+} from "chart.js";
+import { AdvancedReports } from "@/components/advanced-reports";
 
 // Registrar os componentes do Chart.js
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function ReportsPage() {
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
-  })
-  const [resourceType, setResourceType] = useState("all")
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [resourceType, setResourceType] = useState("all");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Dados fictícios para os gráficos
   const usageByDayData = {
-    labels: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+    labels: [
+      "Segunda",
+      "Terça",
+      "Quarta",
+      "Quinta",
+      "Sexta",
+      "Sábado",
+      "Domingo",
+    ],
     datasets: [
       {
         label: "Agendamentos",
@@ -43,10 +68,17 @@ export default function ReportsPage() {
         backgroundColor: "rgba(99, 102, 241, 0.5)",
       },
     ],
-  }
+  };
 
   const resourceUsageData = {
-    labels: ["Data Show", "TV", "Chromebooks", "Caixas de Som", "Laboratório", "Biblioteca"],
+    labels: [
+      "Data Show",
+      "TV",
+      "Chromebooks",
+      "Caixas de Som",
+      "Laboratório",
+      "Biblioteca",
+    ],
     datasets: [
       {
         label: "Total de Agendamentos",
@@ -70,7 +102,7 @@ export default function ReportsPage() {
         borderWidth: 1,
       },
     ],
-  }
+  };
 
   const timeBlockUsageData = {
     labels: [
@@ -91,7 +123,7 @@ export default function ReportsPage() {
         backgroundColor: "rgba(153, 102, 255, 0.5)",
       },
     ],
-  }
+  };
 
   const userTypeUsageData = {
     labels: ["Professores", "Coordenadores", "Diretores", "Funcionários"],
@@ -103,169 +135,25 @@ export default function ReportsPage() {
         hoverOffset: 4,
       },
     ],
-  }
+  };
 
   const exportReport = (type: string) => {
     // Em uma implementação real, isso geraria um arquivo CSV ou PDF
-    alert(`Exportação de relatório ${type} não implementada nesta versão de demonstração.`)
-  }
+    alert(
+      `Exportação de relatório ${type} não implementada nesta versão de demonstração.`
+    );
+  };
 
   return (
-    <div className="flex-1 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
-        <div className="flex items-center space-x-2">
-          <CalendarDateRangePicker value={date} onChange={setDate} />
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+        <p className="text-muted-foreground">
+          Análises avançadas e insights do sistema de agendamento
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Agendamentos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">143</div>
-            <p className="text-xs text-muted-foreground">+12% em relação ao período anterior</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Ocupação</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">68%</div>
-            <p className="text-xs text-muted-foreground">+5% em relação ao período anterior</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cancelamentos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">-3% em relação ao período anterior</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Uso por Dia da Semana</CardTitle>
-              <CardDescription>Quantidade de agendamentos por dia da semana</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => exportReport("uso_diario")}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <Line
-                data={usageByDayData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                    },
-                  },
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Uso por Recurso</CardTitle>
-              <CardDescription>Recursos mais utilizados</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => exportReport("uso_recursos")}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center justify-center">
-              <Pie
-                data={resourceUsageData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="by_time" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="by_time">Por Horário</TabsTrigger>
-          <TabsTrigger value="by_user">Por Tipo de Usuário</TabsTrigger>
-        </TabsList>
-        <TabsContent value="by_time" className="space-y-4">
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <div>
-                <CardTitle>Agendamentos por Horário</CardTitle>
-                <CardDescription>Distribuição de agendamentos pelos diferentes blocos de horário</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => exportReport("uso_horario")}>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[400px]">
-                <Bar
-                  data={timeBlockUsageData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="by_user" className="space-y-4">
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <div>
-                <CardTitle>Agendamentos por Tipo de Usuário</CardTitle>
-                <CardDescription>Distribuição de agendamentos por função do usuário</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => exportReport("uso_usuario")}>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-            </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[400px] flex items-center justify-center">
-                <div className="w-1/2 h-full">
-                  <Pie
-                    data={userTypeUsageData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                    }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <AdvancedReports />
     </div>
-  )
+  );
 }

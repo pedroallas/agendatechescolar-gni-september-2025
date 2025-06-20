@@ -152,6 +152,25 @@ export async function POST(
       );
     }
 
+    // Remover manutenção implícita se existir (será substituída pela real)
+    const implicitMaintenanceToRemove =
+      await prisma.maintenanceRecord.findFirst({
+        where: {
+          resourceId: id,
+          type: "administrative",
+          status: "pending",
+        },
+      });
+
+    if (implicitMaintenanceToRemove) {
+      await prisma.maintenanceRecord.delete({
+        where: { id: implicitMaintenanceToRemove.id },
+      });
+      console.log(
+        `🔄 Manutenção implícita substituída por manutenção real para recurso ${id}`
+      );
+    }
+
     // Criar o registro de manutenção
     const maintenanceRecord = await prisma.maintenanceRecord.create({
       data: {
