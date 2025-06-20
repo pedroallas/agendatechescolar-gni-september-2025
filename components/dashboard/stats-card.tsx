@@ -40,27 +40,36 @@ export function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="relative overflow-hidden h-[120px] flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <div className={cn("rounded-lg p-2", colorClasses[color])}>
-            <Icon className="h-4 w-4" />
+      <Card className="relative overflow-hidden min-h-[120px] sm:h-[120px] flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="text-xs sm:text-sm font-medium leading-tight">
+            {title}
+          </CardTitle>
+          <div
+            className={cn(
+              "rounded-lg p-1.5 sm:p-2 flex-shrink-0",
+              colorClasses[color]
+            )}
+          >
+            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
           </div>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col justify-between">
+        <CardContent className="flex-1 flex flex-col justify-between px-4 sm:px-6 pb-4 sm:pb-6">
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-2xl font-bold"
+            className="text-xl sm:text-2xl font-bold"
           >
             {value}
           </motion.div>
           <div className="space-y-1">
             {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {description}
+              </p>
             )}
-            <div className="h-4 flex items-center">
+            <div className="min-h-[16px] flex items-center">
               {trend ? (
                 <div className="flex items-center">
                   <motion.span
@@ -75,7 +84,7 @@ export function StatsCard({
                     {trend.isPositive ? "+" : "-"}
                     {Math.abs(trend.value)}%
                   </motion.span>
-                  <span className="text-xs text-muted-foreground ml-2">
+                  <span className="text-xs text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">
                     vs. último mês
                   </span>
                 </div>

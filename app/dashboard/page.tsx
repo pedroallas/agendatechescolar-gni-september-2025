@@ -127,20 +127,20 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-1 space-y-4 sm:space-y-6">
       <SimpleTour steps={tourSteps} />
 
-      <div className="flex items-center justify-between space-y-2 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Olá, {user?.name?.split(" ")[0]}! 👋
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Aqui está o resumo das suas atividades de hoje
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <Badge
             variant={isDraggableMode ? "default" : "secondary"}
             className="flex items-center gap-1"
@@ -156,17 +156,20 @@ export default function DashboardPage() {
           <Button
             variant={isDraggableMode ? "default" : "outline"}
             onClick={() => setIsDraggableMode(!isDraggableMode)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
+            size="sm"
           >
             {isDraggableMode ? (
               <>
                 <LayoutDashboard className="h-4 w-4" />
-                Dashboard Padrão
+                <span className="hidden sm:inline">Dashboard Padrão</span>
+                <span className="sm:hidden">Padrão</span>
               </>
             ) : (
               <>
                 <Layout className="h-4 w-4" />
-                Dashboard Customizável
+                <span className="hidden sm:inline">Dashboard Customizável</span>
+                <span className="sm:hidden">Customizar</span>
               </>
             )}
           </Button>
@@ -179,7 +182,7 @@ export default function DashboardPage() {
         <>
           {/* Cards de Estatísticas */}
           <div
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+            className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
             id="dashboard-stats"
           >
             {statsData.map((stat, index) => (
@@ -188,11 +191,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Segunda linha - Gráfico e Calendário */}
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-5">
-            <div className="lg:col-span-3">
+          <div className="grid gap-4 grid-cols-1 xl:grid-cols-5">
+            <div className="xl:col-span-3">
               <BookingsChart data={chartData} />
             </div>
-            <div className="lg:col-span-2">
+            <div className="xl:col-span-2">
               <MiniCalendar bookings={mockBookings} />
             </div>
           </div>

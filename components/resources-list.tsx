@@ -93,13 +93,13 @@ export function ResourcesList({
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {resources.map((resource) => (
-          <Card key={resource.id}>
-            <CardHeader className="p-4">
-              <div className="flex justify-between items-center">
+          <Card key={resource.id} className="flex flex-col">
+            <CardHeader className="p-3 sm:p-4">
+              <div className="flex justify-between items-start gap-2">
                 <CardTitle
-                  className="text-lg cursor-pointer hover:text-blue-600 transition-colors"
+                  className="text-base sm:text-lg cursor-pointer hover:text-blue-600 transition-colors line-clamp-2"
                   onClick={() =>
                     router.push(`/dashboard/resources/${resource.id}`)
                   }
@@ -114,17 +114,20 @@ export function ResourcesList({
                       ? "destructive"
                       : "outline"
                   }
+                  className="text-xs flex-shrink-0"
                 >
                   {resource.status === "available"
                     ? "Disponível"
                     : resource.status === "maintenance"
-                    ? "Em Manutenção"
+                    ? "Manutenção"
                     : "Bloqueado"}
                 </Badge>
               </div>
-              <CardDescription>{resource.location}</CardDescription>
+              <CardDescription className="text-sm">
+                {resource.location}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-3 sm:p-4 pt-0 flex-1">
               <div className="aspect-video overflow-hidden rounded-md">
                 <img
                   src={
@@ -135,22 +138,24 @@ export function ResourcesList({
                 />
               </div>
               {resource.description && (
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-xs sm:text-sm text-muted-foreground line-clamp-2">
                   {resource.description}
                 </p>
               )}
-              {resource.quantity && (
-                <p className="mt-1 text-sm">
-                  <span className="font-medium">Quantidade:</span>{" "}
-                  {resource.quantity}
-                </p>
-              )}
-              {resource.capacity && (
-                <p className="mt-1 text-sm">
-                  <span className="font-medium">Capacidade:</span>{" "}
-                  {resource.capacity}
-                </p>
-              )}
+              <div className="mt-2 space-y-1 text-xs sm:text-sm">
+                {resource.quantity && (
+                  <p>
+                    <span className="font-medium">Qtd:</span>{" "}
+                    {resource.quantity}
+                  </p>
+                )}
+                {resource.capacity && (
+                  <p>
+                    <span className="font-medium">Cap:</span>{" "}
+                    {resource.capacity}
+                  </p>
+                )}
+              </div>
               <div className="mt-3 flex items-center justify-between">
                 <ResourceApprovalBadge
                   requiresApproval={resource.requiresApproval}
@@ -168,10 +173,11 @@ export function ResourcesList({
                 )}
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between p-4">
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 p-3 sm:p-4">
               <Button
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
                 onClick={() =>
                   router.push(`/dashboard/resources/${resource.id}`)
                 }
@@ -179,23 +185,26 @@ export function ResourcesList({
                 Ver Detalhes
               </Button>
               {isAdmin && (
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="flex-1 sm:flex-none"
                     onClick={() => handleEdit(resource.id)}
                   >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
+                    <Edit className="mr-1 sm:mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Editar</span>
+                    <span className="sm:hidden">Edit</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-destructive"
+                    className="text-destructive flex-1 sm:flex-none"
                     onClick={() => setDeleteResourceId(resource.id)}
                   >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Remover
+                    <Trash className="mr-1 sm:mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Remover</span>
+                    <span className="sm:hidden">Del</span>
                   </Button>
                 </div>
               )}
