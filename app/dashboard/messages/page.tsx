@@ -113,17 +113,14 @@ export default function MessagesPage() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      console.log("Buscando usuários...");
       const response = await fetch("/api/auth/users");
-      console.log("Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log(
-          "Usuários encontrados:",
-          data.users?.length || 0,
-          data.users
-        );
         setUsers(data.users || []);
+      } else if (response.status === 401) {
+        toast.error(
+          "Você precisa estar logado para acessar esta funcionalidade"
+        );
       } else {
         console.error("Erro ao buscar usuários:", response.status);
         toast.error("Erro ao carregar lista de usuários");
