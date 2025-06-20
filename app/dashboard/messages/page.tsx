@@ -44,12 +44,10 @@ import {
   Reply,
   Send,
   Plus,
-  Filter,
   RefreshCw,
   Clock,
   AlertCircle,
   CheckCircle2,
-  User,
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -376,63 +374,340 @@ export default function MessagesPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sistema de Mensagens</CardTitle>
-          <CardDescription>
-            O sistema de mensagens internas está em desenvolvimento. Em breve
-            você poderá:
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <h4 className="font-semibold flex items-center">
-                <Send className="h-4 w-4 mr-2" />
-                Funcionalidades Disponíveis
-              </h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Enviar mensagens para outros usuários</li>
-                <li>• Responder mensagens recebidas</li>
-                <li>
-                  • Organizar por prioridade (baixa, normal, alta, urgente)
-                </li>
-                <li>• Marcar mensagens como favoritas</li>
-                <li>• Arquivar conversas</li>
-                <li>• Buscar mensagens por conteúdo</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold flex items-center">
-                <Star className="h-4 w-4 mr-2" />
-                Recursos Avançados
-              </h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Anexar arquivos às mensagens</li>
-                <li>• Notificações em tempo real</li>
-                <li>• Histórico completo de conversas</li>
-                <li>• Filtros avançados</li>
-                <li>• Rascunhos automáticos</li>
-                <li>• Integração com notificações push</li>
-              </ul>
-            </div>
-          </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mensagens</CardTitle>
+              <div className="flex items-center space-x-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar mensagens..."
+                    value={filters.search}
+                    onChange={(e) => applyFilters({ search: e.target.value })}
+                    className="pl-8"
+                  />
+                </div>
+                <Select
+                  value={filters.priority}
+                  onValueChange={(value) => applyFilters({ priority: value })}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="urgent">Urgente</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="low">Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Tabs
+                value={activeTab}
+                onValueChange={(value: any) => setActiveTab(value)}
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="inbox">
+                    Caixa de Entrada
+                    {stats.unread > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="ml-2 h-5 w-5 p-0 text-xs"
+                      >
+                        {stats.unread}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="sent">Enviadas</TabsTrigger>
+                  <TabsTrigger value="drafts">Rascunhos</TabsTrigger>
+                </TabsList>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">
-                Status do Desenvolvimento
-              </h4>
-            </div>
-            <p className="text-blue-800 mt-2 text-sm">
-              O sistema de mensagens internas está 90% completo. As APIs e hooks
-              já estão implementados, faltando apenas finalizar a interface de
-              usuário. Previsão de conclusão: próxima atualização.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+                <TabsContent value={activeTab} className="mt-0">
+                  <ScrollArea className="h-[600px]">
+                    {isLoading && messages.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground">
+                        Carregando mensagens...
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground">
+                        Nenhuma mensagem encontrada
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {messages.map((message) => {
+                          const PriorityIcon = priorityIcons[message.priority];
+                          const isSelected = selectedMessage?.id === message.id;
+
+                          return (
+                            <div
+                              key={message.id}
+                              className={cn(
+                                "p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors",
+                                isSelected && "bg-muted",
+                                !message.isRead &&
+                                  activeTab === "inbox" &&
+                                  "bg-blue-50/50"
+                              )}
+                              onClick={() => openMessage(message)}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage
+                                    src={
+                                      activeTab === "inbox"
+                                        ? message.sender.image
+                                        : message.recipient.image
+                                    }
+                                  />
+                                  <AvatarFallback>
+                                    {activeTab === "inbox"
+                                      ? message.sender.name.charAt(0)
+                                      : message.recipient.name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between">
+                                    <p
+                                      className={cn(
+                                        "text-sm font-medium truncate",
+                                        !message.isRead &&
+                                          activeTab === "inbox" &&
+                                          "font-semibold"
+                                      )}
+                                    >
+                                      {activeTab === "inbox"
+                                        ? message.sender.name
+                                        : message.recipient.name}
+                                    </p>
+                                    <div className="flex items-center space-x-1">
+                                      <PriorityIcon
+                                        className={cn(
+                                          "h-3 w-3",
+                                          priorityColors[
+                                            message.priority
+                                          ].split(" ")[0]
+                                        )}
+                                      />
+                                      {message.isStarred && (
+                                        <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p
+                                    className={cn(
+                                      "text-sm truncate",
+                                      !message.isRead && activeTab === "inbox"
+                                        ? "font-medium text-foreground"
+                                        : "text-muted-foreground"
+                                    )}
+                                  >
+                                    {message.subject}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {message.content}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(
+                                        new Date(message.createdAt),
+                                        "dd/MM/yyyy HH:mm",
+                                        { locale: ptBR }
+                                      )}
+                                    </span>
+                                    {message.replies.length > 0 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {message.replies.length} resposta
+                                        {message.replies.length > 1 ? "s" : ""}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="md:col-span-2">
+          {selectedMessage ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center space-x-2">
+                      <span>{selectedMessage.subject}</span>
+                      <Badge
+                        variant="outline"
+                        className={priorityColors[selectedMessage.priority]}
+                      >
+                        {selectedMessage.priority === "low" && "Baixa"}
+                        {selectedMessage.priority === "normal" && "Normal"}
+                        {selectedMessage.priority === "high" && "Alta"}
+                        {selectedMessage.priority === "urgent" && "Urgente"}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={selectedMessage.sender.image} />
+                          <AvatarFallback>
+                            {selectedMessage.sender.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>
+                          De: {selectedMessage.sender.name} (
+                          {selectedMessage.sender.email})
+                        </span>
+                      </div>
+                      <span>
+                        {format(
+                          new Date(selectedMessage.createdAt),
+                          "dd/MM/yyyy HH:mm",
+                          { locale: ptBR }
+                        )}
+                      </span>
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleStar(selectedMessage)}
+                    >
+                      {selectedMessage.isStarred ? (
+                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      ) : (
+                        <StarOff className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleArchive(selectedMessage)}
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteMessage(selectedMessage.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" onClick={() => setShowReply(true)}>
+                      <Reply className="h-4 w-4 mr-2" />
+                      Responder
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-4">
+                    <div className="prose prose-sm max-w-none">
+                      <p className="whitespace-pre-wrap">
+                        {selectedMessage.content}
+                      </p>
+                    </div>
+
+                    {selectedMessage.replies.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-4">
+                          <h4 className="font-semibold">
+                            Respostas ({selectedMessage.replies.length})
+                          </h4>
+                          {selectedMessage.replies.map((reply) => (
+                            <div
+                              key={reply.id}
+                              className="border-l-2 border-muted pl-4"
+                            >
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={reply.sender.image} />
+                                  <AvatarFallback>
+                                    {reply.sender.name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">
+                                  {reply.sender.name}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {format(
+                                    new Date(reply.createdAt),
+                                    "dd/MM/yyyy HH:mm",
+                                    { locale: ptBR }
+                                  )}
+                                </span>
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap">
+                                {reply.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {showReply && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="space-y-4">
+                      <Label>Sua Resposta</Label>
+                      <Textarea
+                        value={replyForm.content}
+                        onChange={(e) =>
+                          setReplyForm({ content: e.target.value })
+                        }
+                        placeholder="Digite sua resposta..."
+                        rows={4}
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowReply(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button onClick={handleSendReply}>
+                          <Send className="h-4 w-4 mr-2" />
+                          Enviar Resposta
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center h-[600px]">
+                <div className="text-center text-muted-foreground">
+                  <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Selecione uma mensagem para visualizar</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
