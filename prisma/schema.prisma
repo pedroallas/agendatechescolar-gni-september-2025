@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -335,7 +335,7 @@ model InternalMessage {
   isDraft           Boolean        @default(false)
   deletedBySender   Boolean        @default(false)
   deletedByRecipient Boolean       @default(false)
-  attachments       String[]       @default([]) // Array de URLs/paths dos anexos
+  attachments       String?        // JSON string com URLs/paths dos anexos
   readAt            DateTime?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -355,7 +355,7 @@ model MessageReply {
   messageId   String
   senderId    String
   content     String
-  attachments String[]        @default([])
+  attachments String?         // JSON string com URLs/paths dos anexos
   createdAt   DateTime        @default(now())
   message     InternalMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   sender      User            @relation("MessageReplies", fields: [senderId], references: [id], onDelete: Cascade)

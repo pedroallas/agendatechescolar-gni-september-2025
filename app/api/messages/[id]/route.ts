@@ -152,7 +152,7 @@ export async function POST(
         messageId,
         senderId: user.id as string,
         content: data.content,
-        attachments: data.attachments || [],
+        attachments: JSON.stringify(data.attachments || []),
       },
       include: {
         sender: {

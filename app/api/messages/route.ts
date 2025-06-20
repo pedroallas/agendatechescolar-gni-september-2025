@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
         subject: data.subject,
         content: data.content,
         priority: data.priority,
-        attachments: data.attachments || [],
+        attachments: JSON.stringify(data.attachments || []),
         isDraft: false,
       },
       include: {
