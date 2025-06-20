@@ -23,6 +23,12 @@ model User {
   ratings       ResourceRating[] // Avaliações feitas pelo usuário
   maintenanceReports MaintenanceRecord[] // Relatórios de manutenção criados
   supportTickets SupportTicket[] // Tickets de suporte criados pelo usuário
+  // Fase 6 - Comunicação e Notificações
+  notifications  Notification[] // Notificações recebidas
+  communicationPreference CommunicationPreference? // Preferências de comunicação
+  pushSubscriptions PushSubscription[] // Subscrições push
+  emailLogs     EmailLog[] // Logs de emails enviados
+  whatsappMessages WhatsAppMessage[] // Mensagens WhatsApp
 }
 
 model Account {
@@ -204,4 +210,110 @@ model SupportTicket {
 
   @@index([userId])
   @@index([resourceId])
+}
+
+// Modelo para notificações (Fase 6)
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String    // booking_confirmed, booking_cancelled, resource_approved, maintenance_scheduled, etc.
+  title       String
+  content     String
+  isRead      Boolean   @default(false)
+  priority    String    @default("normal") // low, normal, high, urgent
+  category    String    @default("general") // booking, resource, maintenance, system
+  actionUrl   String?   // URL para redirecionar quando clicado
+  metadata    String?   // JSON com dados adicionais
+  expiresAt   DateTime? // Data de expiração da notificação
+  createdAt   DateTime  @default(now())
+  readAt      DateTime? // Data de leitura
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Modelo para preferências de comunicação (Fase 6)
+model CommunicationPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  emailEnabled      Boolean  @default(true)
+  pushEnabled       Boolean  @default(true)
+  whatsappEnabled   Boolean  @default(false)
+  emailFrequency    String   @default("immediate") // immediate, daily, weekly
+  reminderTime      Int      @default(24) // Horas antes do agendamento
+  weekdaysOnly      Boolean  @default(false) // Apenas dias úteis
+  quietHoursStart   String?  // Início do horário silencioso (HH:mm)
+  quietHoursEnd     String?  // Fim do horário silencioso (HH:mm)
+  categories        String   @default("all") // JSON com tipos de notificação permitidos
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Modelo para subscrições push (Fase 6)
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String
+  p256dh     String
+  auth       String
+  userAgent  String?
+  isActive   Boolean  @default(true)
+  deviceInfo String?  // JSON com informações do dispositivo
+  createdAt  DateTime @default(now())
+  lastUsed   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@index([isActive])
+}
+
+// Modelo para log de emails enviados (Fase 6)
+model EmailLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  email       String
+  subject     String
+  template    String
+  status      String   @default("sent") // sent, failed, bounced, delivered
+  provider    String   @default("nodemailer") // nodemailer, resend, sendgrid
+  messageId   String?  // ID fornecido pelo provedor
+  errorMessage String?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  metadata    String?  // JSON com dados extras
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Modelo para histórico de WhatsApp (Fase 6)
+model WhatsAppMessage {
+  id          String   @id @default(cuid())
+  userId      String?
+  phoneNumber String
+  message     String
+  template    String?
+  status      String   @default("sent") // sent, delivered, read, failed
+  messageId   String?  // ID fornecido pelo WhatsApp
+  errorCode   String?
+  errorMessage String?
+  webhookData String?  // JSON com dados do webhook
+  createdAt   DateTime @default(now())
+  deliveredAt DateTime?
+  readAt      DateTime?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([phoneNumber])
+  @@index([status])
+  @@index([createdAt])
 }

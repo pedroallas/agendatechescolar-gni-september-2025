@@ -2,6 +2,7 @@ import type React from "react";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { UserNav } from "@/components/user-nav";
 import { Logo } from "@/components/logo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export default function DashboardLayout({
   children,
@@ -13,7 +14,8 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <Logo href="/dashboard" />
-          <div className="user-nav">
+          <div className="flex items-center gap-4">
+            <NotificationBell />
             <UserNav />
           </div>
         </div>

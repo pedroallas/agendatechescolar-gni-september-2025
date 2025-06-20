@@ -15,6 +15,7 @@ import {
   CheckCircle,
   BarChart3,
   HelpCircle,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -55,6 +56,11 @@ export function DashboardNav({
       href: "/dashboard/resources",
       title: "Recursos",
       icon: <Package className="mr-2 h-4 w-4" />,
+    },
+    {
+      href: "/dashboard/notifications",
+      title: "Notificações",
+      icon: <Bell className="mr-2 h-4 w-4" />,
     },
   ];
 
