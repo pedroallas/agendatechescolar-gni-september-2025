@@ -219,6 +219,87 @@ async function main() {
 
     console.log("📅 Agendamentos criados");
 
+    // Criar notificações de exemplo (Fase 6)
+    console.log("🔔 Criando notificações de exemplo...");
+
+    const notifications = [
+      {
+        userId: admin.id,
+        type: "booking_confirmed",
+        title: "Agendamento confirmado",
+        content:
+          "Seu agendamento do Laboratório de Informática para amanhã às 14h foi confirmado.",
+        priority: "normal",
+        category: "booking",
+        actionUrl: "/dashboard/my-bookings",
+      },
+      {
+        userId: admin.id,
+        type: "resource_approved",
+        title: "Recurso aprovado",
+        content:
+          "O novo projetor multimídia foi aprovado e está disponível para agendamento.",
+        priority: "high",
+        category: "resource",
+        actionUrl: "/dashboard/resources",
+      },
+      {
+        userId: admin.id,
+        type: "maintenance_scheduled",
+        title: "Manutenção agendada",
+        content:
+          "Manutenção preventiva do ar-condicionado agendada para sexta-feira.",
+        priority: "low",
+        category: "maintenance",
+        isRead: true,
+        readAt: new Date(),
+      },
+      {
+        userId: admin.id,
+        type: "system_update",
+        title: "Sistema atualizado",
+        content:
+          "Nova versão do AgendaTech disponível com melhorias de performance.",
+        priority: "normal",
+        category: "system",
+      },
+      {
+        userId: admin.id,
+        type: "booking_reminder",
+        title: "Lembrete de agendamento",
+        content:
+          "Você tem um agendamento amanhã às 10h no Auditório Principal.",
+        priority: "urgent",
+        category: "booking",
+        actionUrl: "/dashboard/my-bookings",
+      },
+    ];
+
+    for (const notificationData of notifications) {
+      await prisma.notification.create({
+        data: notificationData,
+      });
+    }
+
+    // Criar preferências de comunicação de exemplo
+    await prisma.communicationPreference.create({
+      data: {
+        userId: admin.id,
+        emailEnabled: true,
+        pushEnabled: true,
+        whatsappEnabled: false,
+        emailFrequency: "immediate",
+        reminderTime: 24,
+        weekdaysOnly: false,
+        categories: JSON.stringify([
+          "booking",
+          "resource",
+          "maintenance",
+          "system",
+        ]),
+      },
+    });
+
     console.log("✅ Seed concluído com sucesso!");
     console.log({
       users: { admin, teacher },
