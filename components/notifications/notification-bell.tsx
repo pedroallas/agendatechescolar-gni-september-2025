@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Check, CheckCheck, Trash2, Settings, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Settings, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useNotifications, type Notification } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface NotificationBellProps {
   className?: string;
@@ -18,11 +19,11 @@ interface NotificationBellProps {
 function NotificationItem({
   notification,
   onMarkAsRead,
-  onRemove,
+  isProcessing,
 }: {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
-  onRemove: (id: string) => void;
+  isProcessing: string | null;
 }) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -54,12 +55,15 @@ function NotificationItem({
     }
   };
 
+  const isProcessingThis = isProcessing === notification.id;
+
   return (
     <div
       className={cn(
         "p-3 border-l-4 rounded-r-md transition-all hover:shadow-sm",
         getPriorityColor(notification.priority),
-        !notification.isRead && "bg-opacity-80 dark:bg-opacity-80"
+        !notification.isRead && "bg-opacity-80 dark:bg-opacity-80",
+        isProcessingThis && "opacity-50 pointer-events-none"
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -100,19 +104,16 @@ function NotificationItem({
                   size="sm"
                   className="h-6 px-2 text-xs"
                   onClick={() => onMarkAsRead(notification.id)}
+                  disabled={isProcessingThis}
+                  title="Marcar como lida"
                 >
-                  <Check className="h-3 w-3" />
+                  {isProcessingThis ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
                 </Button>
               )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={() => onRemove(notification.id)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
             </div>
           </div>
         </div>
@@ -123,6 +124,7 @@ function NotificationItem({
 
 export function NotificationBell({ className }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -131,9 +133,12 @@ export function NotificationBell({ className }: NotificationBellProps) {
     loading,
     markAsRead,
     markAllAsRead,
-    removeNotification,
     fetchNotifications,
+    fetchUnreadNotifications,
   } = useNotifications();
+
+  // Filtrar apenas notificações não lidas para o sino
+  const unreadNotifications = notifications.filter((n) => !n.isRead);
 
   // Fechar dropdown quando clicar fora
   useEffect(() => {
@@ -156,9 +161,35 @@ export function NotificationBell({ className }: NotificationBellProps) {
   // Recarregar notificações quando abrir
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications({ limit: 10 });
+      // Para o sino, buscar apenas notificações não lidas
+      fetchUnreadNotifications(10);
     }
-  }, [isOpen, fetchNotifications]);
+  }, [isOpen, fetchUnreadNotifications]);
+
+  // Handlers com loading states
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      setIsProcessing(id);
+      await markAsRead(id);
+      toast.success("Notificação marcada como lida");
+    } catch (error) {
+      toast.error("Erro ao marcar notificação como lida");
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      setIsProcessing("all");
+      await markAllAsRead();
+      toast.success("Todas as notificações foram marcadas como lidas");
+    } catch (error) {
+      toast.error("Erro ao marcar todas como lidas");
+    } finally {
+      setIsProcessing(null);
+    }
+  };
 
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
@@ -182,9 +213,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
 
       {/* Dropdown das notificações */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-96 bg-background border rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 top-full mt-2 w-96 bg-background border rounded-lg shadow-lg z-50 max-h-[80vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               <h3 className="font-semibold">Notificações</h3>
@@ -201,10 +232,15 @@ export function NotificationBell({ className }: NotificationBellProps) {
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2 text-xs"
-                  onClick={markAllAsRead}
+                  onClick={handleMarkAllAsRead}
+                  disabled={isProcessing === "all"}
                   title="Marcar todas como lidas"
                 >
-                  <CheckCheck className="h-3 w-3" />
+                  {isProcessing === "all" ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <CheckCheck className="h-3 w-3" />
+                  )}
                 </Button>
               )}
 
@@ -220,20 +256,20 @@ export function NotificationBell({ className }: NotificationBellProps) {
           </div>
 
           {/* Lista de notificações */}
-          <ScrollArea className="max-h-96">
+          <ScrollArea className="flex-1 max-h-96">
             {loading ? (
               <div className="p-8 text-center text-muted-foreground">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                 Carregando notificações...
               </div>
-            ) : notifications.length > 0 ? (
+            ) : unreadNotifications.length > 0 ? (
               <div className="p-2 space-y-2">
-                {notifications.slice(0, 10).map((notification) => (
+                {unreadNotifications.slice(0, 10).map((notification) => (
                   <NotificationItem
                     key={notification.id}
                     notification={notification}
-                    onMarkAsRead={markAsRead}
-                    onRemove={removeNotification}
+                    onMarkAsRead={handleMarkAsRead}
+                    isProcessing={isProcessing}
                   />
                 ))}
               </div>
@@ -247,12 +283,13 @@ export function NotificationBell({ className }: NotificationBellProps) {
           </ScrollArea>
 
           {/* Footer */}
-          {notifications.length > 0 && (
+          {unreadNotifications.length > 0 && (
             <>
               <Separator />
-              <div className="p-3 flex items-center justify-between text-sm">
+              <div className="p-3 flex items-center justify-between text-sm flex-shrink-0">
                 <span className="text-muted-foreground">
-                  {notifications.length} notificações
+                  {unreadNotifications.length} não lida
+                  {unreadNotifications.length !== 1 ? "s" : ""}
                 </span>
 
                 <Button

@@ -7,7 +7,13 @@ import { UserNav } from "@/components/user-nav";
 import { Logo } from "@/components/logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
 export default function DashboardLayout({
@@ -31,6 +37,9 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64 p-0">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Menu de Navegação</SheetTitle>
+                </SheetHeader>
                 <div className="py-4">
                   <div className="px-4 mb-4">
                     <Logo href="/dashboard" />
@@ -57,7 +66,9 @@ export default function DashboardLayout({
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-hidden">
+          <div className="h-full w-full p-4 sm:p-6">{children}</div>
+        </main>
       </div>
     </div>
   );

@@ -173,6 +173,7 @@ async function main() {
           capacity: 30,
           description: "30 computadores com Windows 10 e pacote Office",
           status: "available",
+          requiresApproval: true, // Precisa de aprovação da direção
         },
       }),
       prisma.resource.create({
@@ -184,6 +185,7 @@ async function main() {
           capacity: 50,
           description: "Espaço para eventos, apresentações e reuniões",
           status: "available",
+          requiresApproval: true, // Precisa de aprovação da coordenação
         },
       }),
     ]);

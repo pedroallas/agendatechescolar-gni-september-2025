@@ -65,9 +65,14 @@ export function useNotifications() {
         if (options?.limit) params.set("limit", options.limit.toString());
         if (options?.offset) params.set("offset", options.offset.toString());
 
-        const response = await fetch(`/api/notifications?${params}`);
+        const response = await fetch(`/api/notifications?${params}`, {
+          credentials: "include", // Incluir cookies de autenticação
+        });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Sessão expirada. Faça login novamente.");
+          }
           throw new Error("Erro ao buscar notificações");
         }
 
@@ -86,7 +91,11 @@ export function useNotifications() {
         const errorMessage =
           err instanceof Error ? err.message : "Erro desconhecido";
         setError(errorMessage);
-        toast.error("Erro ao carregar notificações");
+
+        // Só mostrar toast se não for erro de autenticação
+        if (!errorMessage.includes("Sessão expirada")) {
+          toast.error("Erro ao carregar notificações");
+        }
       } finally {
         setLoading(false);
       }
@@ -102,11 +111,17 @@ export function useNotifications() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ isRead: true }),
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao marcar notificação como lida");
+        if (response.status === 401) {
+          throw new Error("Sessão expirada. Faça login novamente.");
+        }
+        throw new Error(
+          `Erro ao marcar notificação como lida: ${response.status}`
+        );
       }
 
       const updatedNotification: Notification = await response.json();
@@ -126,10 +141,12 @@ export function useNotifications() {
         unread: Math.max(0, prev.unread - 1),
         read: prev.read + 1,
       }));
+
+      return updatedNotification;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -141,10 +158,14 @@ export function useNotifications() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ isRead: false }),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Sessão expirada. Faça login novamente.");
+        }
         throw new Error("Erro ao marcar notificação como não lida");
       }
 
@@ -165,10 +186,12 @@ export function useNotifications() {
         unread: prev.unread + 1,
         read: Math.max(0, prev.read - 1),
       }));
+
+      return updatedNotification;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -177,9 +200,13 @@ export function useNotifications() {
     try {
       const response = await fetch("/api/notifications?action=mark-all-read", {
         method: "PUT",
+        credentials: "include",
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Sessão expirada. Faça login novamente.");
+        }
         throw new Error("Erro ao marcar todas as notificações como lidas");
       }
 
@@ -198,12 +225,10 @@ export function useNotifications() {
         unread: 0,
         read: prev.total,
       }));
-
-      toast.success("Todas as notificações foram marcadas como lidas");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -213,131 +238,74 @@ export function useNotifications() {
       try {
         const response = await fetch(`/api/notifications/${notificationId}`, {
           method: "DELETE",
+          credentials: "include",
         });
 
         if (!response.ok) {
-          throw new Error("Erro ao remover notificação");
+          if (response.status === 401) {
+            throw new Error("Sessão expirada. Faça login novamente.");
+          }
+          throw new Error(`Erro ao remover notificação: ${response.status}`);
         }
 
+        // Encontrar a notificação que será removida para atualizar as estatísticas corretamente
         const removedNotification = notifications.find(
           (n) => n.id === notificationId
         );
 
         // Atualizar estado local
-        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+        setNotifications((prev) =>
+          prev.filter((notification) => notification.id !== notificationId)
+        );
 
         // Atualizar estatísticas
-        setStats((prev) => ({
-          total: Math.max(0, prev.total - 1),
-          unread:
-            removedNotification && !removedNotification.isRead
-              ? Math.max(0, prev.unread - 1)
-              : prev.unread,
-          read:
-            removedNotification && removedNotification.isRead
-              ? Math.max(0, prev.read - 1)
-              : prev.read,
-        }));
-
-        toast.success("Notificação removida");
+        if (removedNotification) {
+          setStats((prev) => {
+            const wasUnread = !removedNotification.isRead;
+            return {
+              total: Math.max(0, prev.total - 1),
+              unread: wasUnread ? Math.max(0, prev.unread - 1) : prev.unread,
+              read: wasUnread ? prev.read : Math.max(0, prev.read - 1),
+            };
+          });
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Erro desconhecido";
-        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
     },
     [notifications]
   );
 
-  // Limpar notificações lidas
-  const clearReadNotifications = useCallback(async () => {
-    try {
-      const response = await fetch("/api/notifications?action=clear-read", {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao limpar notificações");
-      }
-
-      const result = await response.json();
-
-      // Atualizar estado local
-      setNotifications((prev) => prev.filter((n) => !n.isRead));
-
-      // Atualizar estatísticas
-      setStats((prev) => ({
-        total: prev.unread,
-        unread: prev.unread,
-        read: 0,
-      }));
-
-      toast.success(result.message);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error(errorMessage);
-    }
-  }, []);
-
-  // Criar nova notificação (para admins)
-  const createNotification = useCallback(
-    async (data: {
-      userId?: string;
-      type: string;
-      title: string;
-      content: string;
-      priority?: "low" | "normal" | "high" | "urgent";
-      category?: "booking" | "resource" | "maintenance" | "system" | "general";
-      actionUrl?: string;
-      metadata?: string;
-      expiresAt?: string;
-    }) => {
-      try {
-        const response = await fetch("/api/notifications", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          throw new Error("Erro ao criar notificação");
-        }
-
-        const newNotification: Notification = await response.json();
-
-        // Se a notificação é para o usuário atual, adicionar à lista
-        setNotifications((prev) => [newNotification, ...prev]);
-
-        // Atualizar estatísticas
-        setStats((prev) => ({
-          total: prev.total + 1,
-          unread: prev.unread + 1,
-          read: prev.read,
-        }));
-
-        toast.success("Notificação criada com sucesso");
-        return newNotification;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Erro desconhecido";
-        toast.error(errorMessage);
-        throw err;
-      }
+  // Buscar apenas notificações não lidas (para o sino)
+  const fetchUnreadNotifications = useCallback(
+    async (limit: number = 10) => {
+      return fetchNotifications({ isRead: false, limit });
     },
-    []
+    [fetchNotifications]
   );
 
-  // Buscar notificações não lidas na inicialização
+  // Carregar notificações iniciais
   useEffect(() => {
-    fetchNotifications({ isRead: false, limit: 20 });
+    fetchNotifications({ limit: 20 });
   }, [fetchNotifications]);
+
+  // Auto-refresh a cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading) {
+        fetchNotifications({ limit: 20 });
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchNotifications, loading]);
 
   return {
     notifications,
     stats,
+    unreadCount: stats.unread,
     loading,
     error,
     fetchNotifications,
@@ -345,10 +313,6 @@ export function useNotifications() {
     markAsUnread,
     markAllAsRead,
     removeNotification,
-    clearReadNotifications,
-    createNotification,
-    // Helpers
-    unreadCount: stats.unread,
-    hasUnread: stats.unread > 0,
+    fetchUnreadNotifications,
   };
 }

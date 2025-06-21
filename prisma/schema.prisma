@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -15,6 +15,11 @@ model User {
   password      String?
   role          String    @default("professor")
   image         String?
+  phone         String?   // Telefone do usuário
+  bio           String?   // Biografia do usuário
+  location      String?   // Localização do usuário
+  avatar        String?   // Avatar personalizado
+  preferences   String?   // Preferências em JSON
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]

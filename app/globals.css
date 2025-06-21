@@ -118,6 +118,60 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Melhorias para quebra de texto responsiva */
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .text-responsive {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  /* Força quebra de texto em mensagens */
+  .message-content {
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    word-wrap: break-word !important;
+    max-width: 100% !important;
+    white-space: pre-wrap !important;
+    hyphens: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Container de mensagem responsivo */
+  .message-container {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Força containers pais a respeitarem largura */
+  .message-wrapper * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Fix específico para Cards de mensagem */
+  .message-wrapper .prose,
+  .message-wrapper .prose * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Fix para ScrollArea */
+  .message-wrapper [data-radix-scroll-area-viewport] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
 }
 
 @layer base {

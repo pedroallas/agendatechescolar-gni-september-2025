@@ -169,7 +169,7 @@ export async function PUT(request: NextRequest) {
     const action = searchParams.get("action");
 
     if (action === "mark-all-read") {
-      await prisma.notification.updateMany({
+      const result = await prisma.notification.updateMany({
         where: {
           userId: user.id as string,
           isRead: false,
@@ -182,6 +182,7 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({
         message: "Todas as notificações foram marcadas como lidas",
+        count: result.count,
       });
     }
 

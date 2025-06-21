@@ -4,15 +4,17 @@ import { getToken } from "next-auth/jwt";
 
 export async function getUser(request?: NextRequest) {
   try {
+    const secret =
+      process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789";
+
     // Se temos o request, usar diretamente
     if (request) {
       const token = await getToken({
         req: request,
-        secret:
-          process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
+        secret,
       });
 
-      if (token) {
+      if (token && token.sub) {
         return {
           id: token.id || token.sub,
           email: token.email,
@@ -22,23 +24,27 @@ export async function getUser(request?: NextRequest) {
       }
     } else {
       // Fallback para cookies
-      const cookieStore = await cookies();
-      const token = await getToken({
-        req: {
-          cookies: { get: (name: string) => cookieStore.get(name)?.value },
-          headers: { cookie: cookieStore.toString() },
-        } as any,
-        secret:
-          process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
-      });
+      try {
+        const cookieStore = await cookies();
+        const token = await getToken({
+          req: {
+            cookies: { get: (name: string) => cookieStore.get(name)?.value },
+            headers: { cookie: cookieStore.toString() },
+          } as any,
+          secret,
+        });
 
-      if (token) {
-        return {
-          id: token.id || token.sub,
-          email: token.email,
-          name: token.name,
-          role: token.role,
-        };
+        if (token && token.sub) {
+          return {
+            id: token.id || token.sub,
+            email: token.email,
+            name: token.name,
+            role: token.role,
+          };
+        }
+      } catch (cookieError) {
+        console.error("Erro ao ler cookies:", cookieError);
+        // Continuar para tentar outras formas de autenticação
       }
     }
 
@@ -50,7 +56,7 @@ export async function getUser(request?: NextRequest) {
 }
 
 export async function requireAuth(request: NextRequest) {
-  const user = await getUser();
+  const user = await getUser(request);
 
   if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -60,7 +66,7 @@ export async function requireAuth(request: NextRequest) {
 }
 
 export async function requireAdmin(request: NextRequest) {
-  const user = await getUser();
+  const user = await getUser(request);
 
   if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));

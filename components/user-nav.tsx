@@ -15,11 +15,31 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useState, useEffect } from "react";
 
 export function UserNav() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [userImage, setUserImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+
+      try {
+        const response = await fetch("/api/user/profile");
+        if (response.ok) {
+          const profile = await response.json();
+          setUserImage(profile.avatar);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar perfil do usuário:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   if (!user) {
     return null;
@@ -31,7 +51,7 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src="/placeholder.svg?height=32&width=32"
+              src={userImage || user.image || undefined}
               alt={user.name}
             />
             <AvatarFallback>

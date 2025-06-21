@@ -28,6 +28,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
+    console.log(
+      `📧 Buscando mensagens para usuário: ${user.id} (${user.name}) - Tipo: ${type} - Email: ${user.email}`
+    );
+
     // Construir filtros baseado no tipo
     let where: any = {};
 
@@ -77,6 +81,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    console.log(`🔍 Filtros aplicados:`, JSON.stringify(where, null, 2));
+
     // Buscar mensagens com relacionamentos
     const [rawMessages, total] = await Promise.all([
       prisma.internalMessage.findMany({
@@ -119,6 +125,10 @@ export async function GET(request: NextRequest) {
       }),
       prisma.internalMessage.count({ where }),
     ]);
+
+    console.log(
+      `📊 Encontradas ${rawMessages.length} mensagens de um total de ${total}`
+    );
 
     // Processar attachments (converter JSON string para array)
     const messages = rawMessages.map((message) => ({
@@ -183,6 +193,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const data = createMessageSchema.parse(body);
+
+    console.log(
+      `📤 Nova mensagem de ${user.name} (${user.id}) para ${data.recipientId}`
+    );
 
     // Verificar se o destinatário existe
     const recipient = await prisma.user.findUnique({
@@ -253,6 +267,11 @@ export async function POST(request: NextRequest) {
         }),
       },
     });
+
+    console.log(`✅ Mensagem criada com sucesso: ID ${message.id}`);
+    console.log(
+      `🔔 Notificação criada para ${recipient.name} (${data.recipientId})`
+    );
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {

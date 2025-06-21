@@ -119,9 +119,16 @@ export function useMessages(options: UseMessagesOptions = {}) {
         if (filters.priority) params.append("priority", filters.priority);
         if (filters.isRead) params.append("isRead", filters.isRead);
 
-        const response = await fetch(`/api/messages?${params}`);
+        const response = await fetch(`/api/messages?${params}`, {
+          credentials: "include", // Incluir cookies de autenticação
+        });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            // Usuário não autenticado, não mostrar erro
+            setState((prev) => ({ ...prev, isLoading: false }));
+            return;
+          }
           throw new Error("Erro ao buscar mensagens");
         }
 
@@ -138,14 +145,25 @@ export function useMessages(options: UseMessagesOptions = {}) {
         }));
       } catch (error) {
         console.error("Erro ao buscar mensagens:", error);
-        setState((prev) => ({
-          ...prev,
-          error: error instanceof Error ? error.message : "Erro desconhecido",
-          isLoading: false,
-        }));
+        // Não mostrar erro para problemas de rede durante auto-refresh
+        if (!autoRefresh) {
+          setState((prev) => ({
+            ...prev,
+            error: error instanceof Error ? error.message : "Erro desconhecido",
+            isLoading: false,
+          }));
+        } else {
+          setState((prev) => ({ ...prev, isLoading: false }));
+        }
       }
     },
-    [type, filters, state.pagination.limit, state.pagination.offset]
+    [
+      type,
+      filters,
+      state.pagination.limit,
+      state.pagination.offset,
+      autoRefresh,
+    ]
   );
 
   // Buscar mensagem específica
@@ -401,12 +419,23 @@ export function useMessages(options: UseMessagesOptions = {}) {
 
   // Refresh manual
   const refresh = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      pagination: { ...prev.pagination, offset: 0 },
-    }));
-    fetchMessages(true);
-  }, [fetchMessages]);
+    try {
+      setState((prev) => ({
+        ...prev,
+        pagination: { ...prev.pagination, offset: 0 },
+      }));
+      fetchMessages(true);
+    } catch (error) {
+      console.error("Erro durante refresh:", error);
+      // Não propagar erro durante auto-refresh
+      if (!autoRefresh) {
+        setState((prev) => ({
+          ...prev,
+          error: "Erro ao atualizar mensagens",
+        }));
+      }
+    }
+  }, [fetchMessages, autoRefresh]);
 
   // Efeito para buscar mensagens
   useEffect(() => {
@@ -425,7 +454,10 @@ export function useMessages(options: UseMessagesOptions = {}) {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      refresh();
+      // Verificar se há conexão antes de tentar fazer refresh
+      if (navigator.onLine) {
+        refresh();
+      }
     }, refreshInterval);
 
     return () => clearInterval(interval);

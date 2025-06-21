@@ -29,15 +29,15 @@ export function QRCodeManager({
   isAdmin = false,
   className = "",
 }: QRCodeManagerProps) {
+  // Verificar se é admin ANTES de declarar qualquer hook
+  if (!isAdmin) {
+    return null;
+  }
+
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [resourceUrl, setResourceUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // Verificar se é admin - se não for, não renderizar o componente
-  if (!isAdmin) {
-    return null;
-  }
 
   // Gerar URL do recurso
   useEffect(() => {

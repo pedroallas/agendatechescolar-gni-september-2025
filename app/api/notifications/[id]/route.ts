@@ -11,17 +11,19 @@ const updateNotificationSchema = z.object({
 // GET - Buscar notificação específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const { id } = await params;
+
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const notification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id as string, // Só pode ver suas próprias notificações
       },
     });
@@ -46,10 +48,12 @@ export async function GET(
 // PUT - Atualizar notificação (marcar como lida/não lida)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const { id } = await params;
+
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -60,7 +64,7 @@ export async function PUT(
     // Verificar se a notificação existe e pertence ao usuário
     const existingNotification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id as string,
       },
     });
@@ -81,7 +85,7 @@ export async function PUT(
     }
 
     const notification = await prisma.notification.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
     });
 
@@ -105,10 +109,12 @@ export async function PUT(
 // DELETE - Remover notificação específica
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUser();
+    const { id } = await params;
+
+    const user = await getUser(request);
     if (!user?.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
@@ -116,7 +122,7 @@ export async function DELETE(
     // Verificar se a notificação existe e pertence ao usuário
     const existingNotification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id as string,
       },
     });
@@ -130,12 +136,12 @@ export async function DELETE(
 
     // Remover notificação
     await prisma.notification.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({
       message: "Notificação removida com sucesso",
-      id: params.id,
+      id: id,
     });
   } catch (error) {
     console.error("Erro ao remover notificação:", error);

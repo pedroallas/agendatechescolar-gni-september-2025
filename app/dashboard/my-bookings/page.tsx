@@ -1,18 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingsList } from "@/components/bookings-list";
+import { BookingFormModal } from "@/components/booking-form-modal";
 import { Plus } from "lucide-react";
 
 export default function MyBookingsPage() {
   const [status, setStatus] = useState("upcoming");
-  const router = useRouter();
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleNewBooking = () => {
-    router.push("/dashboard/schedule");
+    setIsBookingModalOpen(true);
+  };
+
+  const handleBookingCreated = () => {
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -43,15 +48,21 @@ export default function MyBookingsPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="space-y-4">
-          <BookingsList status="upcoming" />
+          <BookingsList status="upcoming" key={`upcoming-${refreshKey}`} />
         </TabsContent>
         <TabsContent value="past" className="space-y-4">
-          <BookingsList status="past" />
+          <BookingsList status="past" key={`past-${refreshKey}`} />
         </TabsContent>
         <TabsContent value="pending" className="space-y-4">
-          <BookingsList status="pending" />
+          <BookingsList status="pending" key={`pending-${refreshKey}`} />
         </TabsContent>
       </Tabs>
+
+      <BookingFormModal
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+        onBookingCreated={handleBookingCreated}
+      />
     </div>
   );
 }
