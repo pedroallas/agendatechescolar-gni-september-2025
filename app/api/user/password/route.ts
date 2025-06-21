@@ -7,10 +7,7 @@ import bcrypt from "bcryptjs";
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    console.log(
-      "🔐 Tentativa de alteração de senha para:",
-      session?.user?.email
-    );
+    // Log removido por segurança
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -18,11 +15,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const { currentPassword, newPassword } = body;
-    console.log("📝 Dados recebidos:", {
-      hasCurrentPassword: !!currentPassword,
-      hasNewPassword: !!newPassword,
-      newPasswordLength: newPassword?.length,
-    });
+    // Log de dados removido por segurança
 
     if (!currentPassword || !newPassword) {
       return NextResponse.json(

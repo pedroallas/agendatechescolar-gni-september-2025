@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -49,6 +49,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isValid },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -162,19 +163,25 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">Cargo</Label>
-                <Select {...register("role")}>
-                  <SelectTrigger
-                    className={errors.role ? "border-red-500" : ""}
-                  >
-                    <SelectValue placeholder="Selecione seu cargo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="professor">Professor</SelectItem>
-                    <SelectItem value="coordenador">Coordenador</SelectItem>
-                    <SelectItem value="diretor">Diretor</SelectItem>
-                    <SelectItem value="funcionario">Funcionário</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger
+                        className={errors.role ? "border-red-500" : ""}
+                      >
+                        <SelectValue placeholder="Selecione seu cargo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professor">Professor</SelectItem>
+                        <SelectItem value="coordenador">Coordenador</SelectItem>
+                        <SelectItem value="diretor">Diretor</SelectItem>
+                        <SelectItem value="funcionario">Funcionário</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {errors.role && (
                   <p className="text-xs text-red-500">{errors.role.message}</p>
                 )}
@@ -242,10 +249,17 @@ export default function RegisterPage() {
               </div>
 
               <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="acceptTerms"
-                  {...register("acceptTerms")}
-                  className={errors.acceptTerms ? "border-red-500" : ""}
+                <Controller
+                  name="acceptTerms"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="acceptTerms"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className={errors.acceptTerms ? "border-red-500" : ""}
+                    />
+                  )}
                 />
                 <div className="space-y-1">
                   <Label

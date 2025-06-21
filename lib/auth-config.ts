@@ -113,7 +113,7 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 // Estender tipos do NextAuth

@@ -1,9 +1,27 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { hash } from "bcrypt";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-config";
 
 export async function GET() {
   try {
+    // Verificar se o usuário está autenticado e é admin
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Acesso negado. Faça login." },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "diretor") {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas diretores podem executar seed." },
+        { status: 403 }
+      );
+    }
     // Limpar dados existentes (cuidado em produção!)
     await prisma.booking.deleteMany();
     await prisma.maintenanceBlock.deleteMany();

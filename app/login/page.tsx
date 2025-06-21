@@ -108,7 +108,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,7 +117,7 @@ function LoginContent() {
       >
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary mb-6"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar ao início
@@ -160,7 +160,7 @@ function LoginContent() {
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="email"
                     type="email"
@@ -185,7 +185,7 @@ function LoginContent() {
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -197,7 +197,7 @@ function LoginContent() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -235,7 +235,7 @@ function LoginContent() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">
+                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
                   Ou continue com
                 </span>
               </div>
@@ -278,32 +278,17 @@ function LoginContent() {
           </CardFooter>
         </Card>
 
-        <p className="text-center text-xs text-gray-500 mt-4">
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
           Ao fazer login, você concorda com nossos{" "}
-          <Link href="/terms" className="underline">
+          <Link href="/terms" className="underline hover:text-primary">
             termos de uso
           </Link>{" "}
           e{" "}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="underline hover:text-primary">
             política de privacidade
           </Link>
           .
         </p>
-
-        {/* Informação de teste - remover em produção */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg text-sm">
-          <p className="font-semibold text-blue-900">🧪 Contas de teste:</p>
-          <div className="mt-2 space-y-1 text-blue-700">
-            <p>
-              <span className="font-medium">Admin:</span> bomdia1295@gmail.com /
-              admin123
-            </p>
-            <p>
-              <span className="font-medium">Professor:</span>{" "}
-              professor@escola.edu.br / user123
-            </p>
-          </div>
-        </div>
       </motion.div>
     </div>
   );

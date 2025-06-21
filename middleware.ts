@@ -11,7 +11,6 @@ const publicRoutes = [
   "/api/auth", // Todas as rotas do NextAuth
   "/api/resources", // Temporariamente público para landing page
   "/api/bookings", // Temporariamente público para landing page
-  "/api/seed", // Rota de seed deve ser pública
 ];
 
 // Função para verificar se a rota é pública
@@ -32,8 +31,7 @@ export async function middleware(request: NextRequest) {
   // Verifica se o usuário está autenticado usando NextAuth
   const token = await getToken({
     req: request,
-    secret:
-      process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789",
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   if (!token) {

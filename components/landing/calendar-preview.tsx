@@ -222,9 +222,9 @@ export function CalendarPreview() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Calendário de Dias */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-2 lg:order-1">
             <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -233,14 +233,14 @@ export function CalendarPreview() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 gap-2 mb-6">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-6">
                   {weekDays.map((date, index) => (
                     <motion.button
                       key={index}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedDate(date)}
-                      className={`p-3 rounded-xl text-center transition-all ${
+                      className={`p-2 sm:p-3 rounded-xl text-center transition-all ${
                         selectedDate.toDateString() === date.toDateString()
                           ? "bg-primary text-primary-foreground shadow-lg"
                           : "bg-muted hover:bg-muted/80"
@@ -249,7 +249,9 @@ export function CalendarPreview() {
                       <div className="text-xs font-medium">
                         {formatDate(date).split(",")[0]}
                       </div>
-                      <div className="text-lg font-bold">{date.getDate()}</div>
+                      <div className="text-sm sm:text-lg font-bold">
+                        {date.getDate()}
+                      </div>
                       {isToday(date) && (
                         <div className="text-xs text-orange-400 font-medium">
                           Hoje
@@ -280,32 +282,41 @@ export function CalendarPreview() {
                           key={resource.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border hover:border-primary/50 transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-muted/50 rounded-lg border hover:border-primary/50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="text-2xl flex-shrink-0">
                               {getResourceIcon(resource.category)}
                             </div>
-                            <div>
-                              <div className="font-medium">{resource.name}</div>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                {resource.location}
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium truncate">
+                                {resource.name}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {resource.location}
+                                  </span>
+                                </div>
                                 {resource.capacity && (
-                                  <>
-                                    <Users className="h-3 w-3 ml-2" />
-                                    {resource.capacity}
-                                  </>
+                                  <div className="flex items-center gap-1">
+                                    <Users className="h-3 w-3 flex-shrink-0" />
+                                    <span>{resource.capacity}</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge variant="secondary" className="mb-1">
+                          <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 sm:text-right">
+                            <Badge
+                              variant="secondary"
+                              className="whitespace-nowrap"
+                            >
                               {resource.availableSlots}/{resource.totalSlots}{" "}
                               livres
                             </Badge>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                               <Clock className="h-3 w-3" />
                               Horários disponíveis
                             </div>
@@ -320,12 +331,12 @@ export function CalendarPreview() {
           </div>
 
           {/* Estatísticas Rápidas */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Resumo de Hoje</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-9 py-9">
+              <CardContent className="space-y-6 sm:space-y-9 py-6 sm:py-9">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
