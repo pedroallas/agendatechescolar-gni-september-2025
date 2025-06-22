@@ -1,6 +1,14 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "prisma generate && npm run build",
   "devCommand": "npm run dev",
   "framework": "nextjs",
-  "installCommand": "npm install"
+  "installCommand": "npm install && prisma generate",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "PRISMA_GENERATE_SKIP_AUTOINSTALL": "true"
+  }
 }
