@@ -70,29 +70,108 @@ export function CalendarPreview() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resourcesRes, bookingsRes, timeBlocksRes] = await Promise.all([
-        fetch("/api/resources"),
-        fetch("/api/bookings"),
-        fetch("/api/time-blocks"),
-      ]);
 
-      // Check if responses are ok before parsing JSON
-      if (!resourcesRes.ok || !bookingsRes.ok || !timeBlocksRes.ok) {
-        console.error("Erro ao buscar dados das APIs");
-        setResources([]);
-        setBookings([]);
-        setTimeBlocks([]);
-        return;
+      // Try to fetch real data, but fallback to mock data if it fails
+      try {
+        const [resourcesRes, bookingsRes, timeBlocksRes] = await Promise.all([
+          fetch("/api/resources").catch(() => null),
+          fetch("/api/bookings").catch(() => null),
+          fetch("/api/time-blocks").catch(() => null),
+        ]);
+
+        // If all requests succeeded, use real data
+        if (resourcesRes?.ok && bookingsRes?.ok && timeBlocksRes?.ok) {
+          const resourcesData = await resourcesRes.json();
+          const bookingsData = await bookingsRes.json();
+          const timeBlocksData = await timeBlocksRes.json();
+
+          setResources(Array.isArray(resourcesData) ? resourcesData : []);
+          setBookings(Array.isArray(bookingsData) ? bookingsData : []);
+          setTimeBlocks(Array.isArray(timeBlocksData) ? timeBlocksData : []);
+          return;
+        }
+      } catch (apiError) {
+        console.log("APIs não disponíveis, usando dados de demonstração");
       }
 
-      const resourcesData = await resourcesRes.json();
-      const bookingsData = await bookingsRes.json();
-      const timeBlocksData = await timeBlocksRes.json();
+      // Fallback to mock data for preview
+      setResources([
+        {
+          id: "1",
+          name: "Datashow Sala 101",
+          type: "equipment",
+          category: "datashow",
+          location: "Sala 101",
+          capacity: 1,
+          status: "available",
+        },
+        {
+          id: "2",
+          name: "Laboratório de Informática",
+          type: "room",
+          category: "lab",
+          location: "Bloco B",
+          capacity: 30,
+          status: "available",
+        },
+        {
+          id: "3",
+          name: "Chromebook - Turma A",
+          type: "equipment",
+          category: "chromebook",
+          location: "Biblioteca",
+          capacity: 15,
+          status: "available",
+        },
+      ]);
 
-      // Ensure we have arrays
-      setResources(Array.isArray(resourcesData) ? resourcesData : []);
-      setBookings(Array.isArray(bookingsData) ? bookingsData : []);
-      setTimeBlocks(Array.isArray(timeBlocksData) ? timeBlocksData : []);
+      setTimeBlocks([
+        {
+          id: "1",
+          startTime: "07:30",
+          endTime: "08:20",
+          label: "1º Horário",
+          shift: "morning",
+        },
+        {
+          id: "2",
+          startTime: "08:20",
+          endTime: "09:10",
+          label: "2º Horário",
+          shift: "morning",
+        },
+        {
+          id: "3",
+          startTime: "09:30",
+          endTime: "10:20",
+          label: "3º Horário",
+          shift: "morning",
+        },
+      ]);
+
+      setBookings([
+        {
+          id: "1",
+          resource: {
+            id: "1",
+            name: "Datashow Sala 101",
+            type: "equipment",
+            category: "datashow",
+            location: "Sala 101",
+            status: "available",
+          },
+          timeBlock: {
+            id: "1",
+            startTime: "07:30",
+            endTime: "08:20",
+            label: "1º Horário",
+            shift: "morning",
+          },
+          date: new Date().toISOString(),
+          purpose: "Aula de História",
+          status: "confirmed",
+        },
+      ]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       // Set empty arrays on error
