@@ -31,7 +31,8 @@ export async function middleware(request: NextRequest) {
   // Verifica se o usuário está autenticado usando NextAuth
   const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET,
+    // Tentar NEXTAUTH_SECRET primeiro, depois AUTH_SECRET como fallback
+    secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
   });
 
   if (!token) {

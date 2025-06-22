@@ -113,7 +113,8 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  // Tentar NEXTAUTH_SECRET primeiro, depois AUTH_SECRET como fallback
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
 };
 
 // Estender tipos do NextAuth

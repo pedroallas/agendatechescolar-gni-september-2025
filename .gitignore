@@ -106,3 +106,4 @@ temp/
 
 # Turbo
 .turbo
+.vercel

@@ -4,8 +4,11 @@ import { getToken } from "next-auth/jwt";
 
 export async function getUser(request?: NextRequest) {
   try {
+    // Tentar NEXTAUTH_SECRET primeiro, depois AUTH_SECRET como fallback
     const secret =
-      process.env.NEXTAUTH_SECRET || "desenvolvimento-temporario-123456789";
+      process.env.NEXTAUTH_SECRET ||
+      process.env.AUTH_SECRET ||
+      "desenvolvimento-temporario-123456789";
 
     // Se temos o request, usar diretamente
     if (request) {

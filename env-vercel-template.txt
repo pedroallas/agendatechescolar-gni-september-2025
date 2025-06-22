@@ -1,0 +1,29 @@
+# Template de variáveis de ambiente para Vercel
+# IMPORTANTE: Configure estas variáveis no painel do Vercel em Settings > Environment Variables
+# NÃO use como "secrets", mas sim como variáveis de ambiente normais
+
+# Banco de dados PostgreSQL (substitua pelos dados reais do seu banco)
+DATABASE_URL=postgresql://username:password@host:5432/database
+
+# Secret para NextAuth (use este novo valor gerado)
+# OPÇÃO 1: Tente primeiro com NEXTAUTH_SECRET
+NEXTAUTH_SECRET=QCbiIDtTDRIJVAXgg8sFdg0vK8B5HGNvR8INGUC7VIk=
+
+# OPÇÃO 2: Se NEXTAUTH_SECRET der erro, use AUTH_SECRET (fallback)
+# AUTH_SECRET=QCbiIDtTDRIJVAXgg8sFdg0vK8B5HGNvR8INGUC7VIk=
+
+# URL do seu projeto no Vercel (substitua pelo nome real do projeto)
+NEXTAUTH_URL=https://agenda-tech-escola-2024.vercel.app
+
+# INSTRUÇÕES DE CONFIGURAÇÃO NO VERCEL:
+# 1. Vá para Settings > Environment Variables no seu projeto
+# 2. Adicione cada variável acima como Environment Variable (não como Secret)
+# 3. Marque Production, Preview e Development para cada uma
+# 4. Substitua os valores pelos dados reais do seu ambiente
+
+# SOLUÇÃO PARA ERRO DE NEXTAUTH_SECRET:
+# Se continuar dando erro "references Secret", tente:
+# 1. Delete COMPLETAMENTE a variável NEXTAUTH_SECRET
+# 2. Aguarde 2-3 minutos
+# 3. Crie uma nova variável chamada AUTH_SECRET com o mesmo valor
+# 4. O código foi modificado para aceitar ambos os nomes 
