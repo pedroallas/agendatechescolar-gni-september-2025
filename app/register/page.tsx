@@ -92,7 +92,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,7 +101,7 @@ export default function RegisterPage() {
       >
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary mb-6"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar ao início
@@ -126,7 +126,7 @@ export default function RegisterPage() {
               )}
 
               {success && (
-                <Alert className="bg-green-50 text-green-800 border-green-200">
+                <Alert className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800">
                   <CheckCircle2 className="h-4 w-4" />
                   <AlertDescription>
                     Conta criada com sucesso! Redirecionando...
@@ -201,7 +201,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -232,7 +232,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-4 w-4" />
