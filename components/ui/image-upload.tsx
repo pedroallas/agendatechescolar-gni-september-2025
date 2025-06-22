@@ -153,7 +153,7 @@ export function ImageUpload({
                   Clique ou arraste uma imagem
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  PNG, JPG, JPEG até 5MB
+                  PNG, JPG, JPEG até 2MB
                 </p>
               </div>
             </div>

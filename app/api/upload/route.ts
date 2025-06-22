@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,34 +20,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar tamanho (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Verificar tamanho (máximo 2MB para base64)
+    if (file.size > 2 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "Arquivo muito grande. Máximo 5MB" },
+        { error: "Arquivo muito grande. Máximo 2MB" },
         { status: 400 }
       );
     }
 
+    // Converter para base64 (compatível com Vercel)
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString("base64");
+    const mimeType = file.type;
 
-    // Criar pasta uploads se não existir
-    const uploadsDir = join(process.cwd(), "public", "uploads");
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Gerar nome único para o arquivo
-    const timestamp = Date.now();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const fileName = `${timestamp}_${originalName}`;
-    const filePath = join(uploadsDir, fileName);
-
-    // Salvar arquivo
-    await writeFile(filePath, buffer);
-
-    // Retornar URL da imagem
-    const imageUrl = `/uploads/${fileName}`;
+    // Criar data URL
+    const imageUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       message: "Upload realizado com sucesso",
