@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "node -r esbuild-register prisma/seed.ts",
     "setup:dev": "node scripts/setup-dev.js",
     "setup": "npm run setup:dev && npx prisma generate",
     "use-sqlite": "node scripts/use-sqlite.js",
-    "use-postgres": "node scripts/use-postgres.js"
+    "use-postgres": "node scripts/use-postgres.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.1",
